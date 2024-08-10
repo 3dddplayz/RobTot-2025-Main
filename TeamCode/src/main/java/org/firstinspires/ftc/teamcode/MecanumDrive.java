@@ -38,14 +38,17 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
+import com.qualcomm.robotcore.util.ReadWriteFile;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 import org.firstinspires.ftc.teamcode.messages.DriveCommandMessage;
 import org.firstinspires.ftc.teamcode.messages.MecanumCommandMessage;
 import org.firstinspires.ftc.teamcode.messages.MecanumLocalizerInputsMessage;
 import org.firstinspires.ftc.teamcode.messages.PoseMessage;
 
+import java.io.File;
 import java.lang.Math;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -495,5 +498,24 @@ public final class MecanumDrive {
                 defaultTurnConstraints,
                 defaultVelConstraint, defaultAccelConstraint
         );
+    }
+    public void writePos(){
+        File file = AppUtil.getInstance().getSettingsFile("x.json");
+        ReadWriteFile.writeFile(file, pose.position.x+"");
+        file = AppUtil.getInstance().getSettingsFile("y.json");
+        ReadWriteFile.writeFile(file, pose.position.y+"");
+        file = AppUtil.getInstance().getSettingsFile("h.json");
+        ReadWriteFile.writeFile(file, pose.heading.toDouble()+"");
+    }
+    public void readPos(){
+        File file = AppUtil.getInstance().getSettingsFile("x.json");
+        double x = new Double(ReadWriteFile.readFile(file)).doubleValue();
+
+        file = AppUtil.getInstance().getSettingsFile("y.json");
+        double y = new Double(ReadWriteFile.readFile(file)).doubleValue();
+
+        file = AppUtil.getInstance().getSettingsFile("h.json");
+        double h = new Double(ReadWriteFile.readFile(file)).doubleValue();
+        pose = new Pose2d(x,y,h);
     }
 }

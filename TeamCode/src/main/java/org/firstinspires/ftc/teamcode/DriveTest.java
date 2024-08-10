@@ -31,15 +31,16 @@ public final class DriveTest extends LinearOpMode {
 
             Actions.runBlocking(
                     drive.actionBuilder(beginPose)
-                            .strafeToConstantHeading(new Vector2d(15, 15), new TranslationalVelConstraint(5.0))
-                            .strafeToConstantHeading(new Vector2d(0, 0), new TranslationalVelConstraint(5.0))
+                            .splineToLinearHeading(new Pose2d(15, 15,-Math.PI/2),Math.PI/2,new TranslationalVelConstraint(5.0))
+                            //.strafeToConstantHeading(new Vector2d(0, 0), new TranslationalVelConstraint(5.0))
                             .build());
+            drive.writePos();
 
-            String fileName = "choords.json";
-            File file = AppUtil.getInstance().getSettingsFile(fileName);
-            ReadWriteFile.writeFile(file, drive.pose.position.x+"");
-//            ReadWriteFile.writeFile(file, drive.pose.position.y+"");
+//            String fileName = "x.json";
+//            File file = AppUtil.getInstance().getSettingsFile(fileName);
 //            ReadWriteFile.writeFile(file, drive.pose.position.x+"");
+////            ReadWriteFile.writeFile(file, drive.pose.position.y+"");
+////            ReadWriteFile.writeFile(file, drive.pose.position.x+"");
         }else {
             throw new RuntimeException();
         }

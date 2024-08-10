@@ -33,11 +33,11 @@ public class TeleOpPlus extends LinearOpMode {
     @Override
     public void runOpMode(){
         waitForStart();
+//        String fileName = "choords.json";
+//        File file = AppUtil.getInstance().getSettingsFile(fileName);
+//        double x = new Double(ReadWriteFile.readFile(file)).doubleValue();
         MecanumDrive drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
-        String fileName = "choords.json";
-        File file = AppUtil.getInstance().getSettingsFile(fileName);
-        double x = new Double(ReadWriteFile.readFile(file)).doubleValue();
-        drive.pose.position.plus(new Vector2d(x,0));
+        drive.readPos();
         while(opModeIsActive()){
             looping(drive);
         }
