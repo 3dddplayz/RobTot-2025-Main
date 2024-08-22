@@ -76,7 +76,7 @@ public class TeleOpPlus extends LinearOpMode {
         telemetry.addData("Heading: ", drive.pose.heading.toDouble());
         telemetry.update();
         if(!driverOveride) {
-            drive.setDrivePowers(new PoseVelocity2d(new Vector2d(-gamepad1.left_stick_y, -gamepad1.left_stick_x), -gamepad1.right_stick_x));
+            drive.TeleOpMove(new PoseVelocity2d(new Vector2d(-gamepad1.left_stick_y, -gamepad1.left_stick_x), -gamepad1.right_stick_x));
         }
         dash.sendTelemetryPacket(packet);
     }

@@ -70,7 +70,7 @@ public final class MecanumDrive {
         //8.5-(2/16)
         //mm/tick = (48*Math.PI)/(2000)
         //in/mm = 25.4
-        public double inPerTick = (48*Math.PI)/(2000*25.4);//.0028949
+        public double inPerTick = (48 * Math.PI) / (2000 * 25.4);//.0028949
         public double lateralInPerTick = inPerTick;
         public double trackWidthTicks = 3169.3267881669526;
 
@@ -95,7 +95,7 @@ public final class MecanumDrive {
 
         public double axialVelGain = 0;
         public double lateralVelGain = 0;
-        public double headingVelGain =  0; // shared with turn
+        public double headingVelGain = 0; // shared with turn
     }
 
     public static Params PARAMS = new Params();
@@ -129,6 +129,8 @@ public final class MecanumDrive {
     private final DownsampledWriter driveCommandWriter = new DownsampledWriter("DRIVE_COMMAND", 50_000_000);
     private final DownsampledWriter mecanumCommandWriter = new DownsampledWriter("MECANUM_COMMAND", 50_000_000);
 
+    public double targetHeading = 0;
+
     public class DriveLocalizer implements Localizer {
         public final Encoder leftFront, leftBack, rightBack, rightFront;
         public final IMU imu;
@@ -146,7 +148,7 @@ public final class MecanumDrive {
             imu = lazyImu.get();
 
             // TODO: reverse encoders if needed
-               //rightFront.setDirection(DcMotorSimple.Direction.REVERSE);
+            //rightFront.setDirection(DcMotorSimple.Direction.REVERSE);
 //               leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
         }
 
@@ -217,6 +219,8 @@ public final class MecanumDrive {
     public MecanumDrive(HardwareMap hardwareMap, Pose2d pose) {
         this.pose = pose;
 
+        targetHeading = pose.heading.toDouble();
+
         LynxFirmware.throwIfModulesAreOutdated(hardwareMap);
 
         for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
@@ -236,8 +240,8 @@ public final class MecanumDrive {
         rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // TODO: reverse motor directions if needed
-           leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
-           leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
+        leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
+        leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // TODO: make sure your config has an IMU with this name (can be BNO or BHI)
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
@@ -251,6 +255,16 @@ public final class MecanumDrive {
 
         FlightRecorder.write("MECANUM_PARAMS", PARAMS);
     }
+
+    public void TeleOpMove(PoseVelocity2d targetVel) {
+        if(Math.abs(targetVel.angVel)<0.05){
+            double headingChange = PARAMS.headingGain*(targetHeading - pose.heading.toDouble());
+            targetVel.minus(new PoseVelocity2d(new Vector2d(0,0),-headingChange));
+        }else targetHeading = pose.heading.toDouble();
+
+        setDrivePowers(targetVel);
+    }
+
 
     public void setDrivePowers(PoseVelocity2d powers) {
         MecanumKinematics.WheelVelocities<Time> wheelVels = new MecanumKinematics(1).inverse(
