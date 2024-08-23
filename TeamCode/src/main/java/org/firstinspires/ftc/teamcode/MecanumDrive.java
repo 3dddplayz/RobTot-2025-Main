@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import androidx.annotation.NonNull;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
@@ -255,11 +256,23 @@ public final class MecanumDrive {
 
         FlightRecorder.write("MECANUM_PARAMS", PARAMS);
     }
-
+    public double angleCor(double ang){
+        if(Math.abs(ang)>Math.abs(ang+Math.PI*2)){
+            ang = ang+Math.PI*2;
+        }else if(Math.abs(ang)>Math.abs(ang-Math.PI*2)){
+            ang = ang-Math.PI*2;
+        }
+        return ang;
+    }
     public void TeleOpMove(PoseVelocity2d targetVel) {
         if(Math.abs(targetVel.angVel)<0.05){
-            double headingChange = PARAMS.headingGain*(targetHeading - pose.heading.toDouble());
-            targetVel.minus(new PoseVelocity2d(new Vector2d(0,0),-headingChange));
+//
+            double headingChange = angleCor(1*(targetHeading - pose.heading.toDouble()));
+            TelemetryPacket packet = new TelemetryPacket();
+            FtcDashboard dash = FtcDashboard.getInstance();
+            packet.put("hi",targetHeading);
+            targetVel = new PoseVelocity2d(new Vector2d(targetVel.linearVel.x,targetVel.linearVel.y),targetVel.angVel+headingChange);
+            dash.sendTelemetryPacket(packet);
         }else targetHeading = pose.heading.toDouble();
 
         setDrivePowers(targetVel);

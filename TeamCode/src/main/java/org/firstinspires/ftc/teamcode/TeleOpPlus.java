@@ -37,7 +37,7 @@ public class TeleOpPlus extends LinearOpMode {
 //        File file = AppUtil.getInstance().getSettingsFile(fileName);
 //        double x = new Double(ReadWriteFile.readFile(file)).doubleValue();
         MecanumDrive drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
-        drive.readPos();
+        //drive.readPos();
         while(opModeIsActive()){
             looping(drive);
         }
