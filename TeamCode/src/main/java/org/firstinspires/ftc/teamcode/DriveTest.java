@@ -2,21 +2,13 @@ package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TranslationalVelConstraint;
-import com.acmerobotics.roadrunner.Vector2d;
-import com.acmerobotics.roadrunner.VelConstraint;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.util.ReadWriteFile;
 
-import java.io.*;
+import org.firstinspires.ftc.teamcode.movement.MecanumDrive;
 
-import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
-import org.json.*;
-
-import org.firstinspires.ftc.teamcode.tuning.TuningOpModes;
-import org.json.JSONObject;
+import org.firstinspires.ftc.teamcode.rrLibs.tuning.TuningOpModes;
 
 @Autonomous(name = "Drive Test", group = "Auto Testing")
 public final class DriveTest extends LinearOpMode {

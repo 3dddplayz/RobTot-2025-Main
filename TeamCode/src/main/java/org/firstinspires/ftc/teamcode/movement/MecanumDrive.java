@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.movement;
 
 import androidx.annotation.NonNull;
 
@@ -44,10 +44,11 @@ import com.qualcomm.robotcore.util.ReadWriteFile;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
-import org.firstinspires.ftc.teamcode.messages.DriveCommandMessage;
-import org.firstinspires.ftc.teamcode.messages.MecanumCommandMessage;
-import org.firstinspires.ftc.teamcode.messages.MecanumLocalizerInputsMessage;
-import org.firstinspires.ftc.teamcode.messages.PoseMessage;
+import org.firstinspires.ftc.teamcode.rrLibs.messages.Drawing;
+import org.firstinspires.ftc.teamcode.rrLibs.messages.DriveCommandMessage;
+import org.firstinspires.ftc.teamcode.rrLibs.messages.MecanumCommandMessage;
+import org.firstinspires.ftc.teamcode.rrLibs.messages.MecanumLocalizerInputsMessage;
+import org.firstinspires.ftc.teamcode.rrLibs.messages.PoseMessage;
 
 import java.io.File;
 import java.lang.Math;
@@ -366,6 +367,8 @@ public final class MecanumDrive {
             leftBack.setPower(leftBackPower);
             rightBack.setPower(rightBackPower);
             rightFront.setPower(rightFrontPower);
+
+            targetHeading = pose.heading.toDouble();
 
             p.put("x", pose.position.x);
             p.put("y", pose.position.y);

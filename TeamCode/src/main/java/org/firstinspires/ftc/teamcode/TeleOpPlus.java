@@ -8,19 +8,12 @@ import com.acmerobotics.roadrunner.InstantAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.SequentialAction;
-import com.acmerobotics.roadrunner.SleepAction;
-import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.util.ReadWriteFile;
 
-import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
-
-import java.io.*;
+import org.firstinspires.ftc.teamcode.movement.MecanumDrive;
 
 import java.util.*;
 
@@ -65,7 +58,7 @@ public class TeleOpPlus extends LinearOpMode {
             driverOveride = true;
             runningActions.add( new SequentialAction(
                     new InstantAction(() -> driverOveride = true),
-                    new InstantAction(() -> Actions.runBlocking(drive.actionBuilder(pose).strafeToLinearHeading(new Vector2d(0, 0),0).build())),
+                    new InstantAction(() -> Actions.runBlocking(drive.actionBuilder(pose).strafeToLinearHeading(new Vector2d(20+pose.position.x, 20+pose.position.y),pose.heading.toDouble()+Math.PI/2).build())),
                     new InstantAction(() -> driverOveride = false)
 
             ));
