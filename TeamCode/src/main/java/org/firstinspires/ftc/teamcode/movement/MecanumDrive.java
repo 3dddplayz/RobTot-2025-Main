@@ -288,8 +288,15 @@ public final class MecanumDrive {
         for (DualNum<Time> power : wheelVels.all()) {
             maxPowerMag = Math.max(maxPowerMag, power.value());
         }
-
-        leftFront.setPower(wheelVels.leftFront.get(0) / maxPowerMag);
+        TelemetryPacket packet = new TelemetryPacket();
+        FtcDashboard dash = FtcDashboard.getInstance();
+        packet.put("wheel power",(wheelVels.leftFront.get(0) / maxPowerMag));
+        dash.sendTelemetryPacket(packet);
+        double div = 1;
+        if(Math.abs(wheelVels.leftFront.get(0))>1){
+            div = wheelVels.leftFront.get(0);
+        }
+        leftFront.setPower(wheelVels.leftFront.get(0) / maxPowerMag /div);
         leftBack.setPower(wheelVels.leftBack.get(0) / maxPowerMag);
         rightBack.setPower(wheelVels.rightBack.get(0) / maxPowerMag);
         rightFront.setPower(wheelVels.rightFront.get(0) / maxPowerMag);
