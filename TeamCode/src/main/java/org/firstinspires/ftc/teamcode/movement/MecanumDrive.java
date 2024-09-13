@@ -39,6 +39,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.ReadWriteFile;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -91,13 +92,13 @@ public final class MecanumDrive {
         public double maxAngAccel = Math.PI;
 
         // path controller gains
-        public double axialGain = 1;
-        public double lateralGain = 1;
-        public double headingGain = 1; // shared with turn
+        public double axialGain = 1.75;
+        public double lateralGain = 1.75;
+        public double headingGain = 1.75; // shared with turn
 
-        public double axialVelGain = 0;
-        public double lateralVelGain = 0;
-        public double headingVelGain = 0; // shared with turn
+        public double axialVelGain = 0.05;
+        public double lateralVelGain = 0.05;
+        public double headingVelGain = 0.05; // shared with turn
     }
 
     public static Params PARAMS = new Params();
@@ -219,6 +220,7 @@ public final class MecanumDrive {
     }
 
     public MecanumDrive(HardwareMap hardwareMap, Pose2d pose) {
+
         this.pose = pose;
 
         targetHeading = pose.heading.toDouble();
@@ -265,9 +267,16 @@ public final class MecanumDrive {
         }
         return ang;
     }
+    ElapsedTime time = new ElapsedTime();
     public void TeleOpMove(PoseVelocity2d targetVel) {
-        if(Math.abs(targetVel.angVel)<0.05){
-//
+        if(Math.abs(targetVel.angVel)>0.05){
+            TelemetryPacket packet = new TelemetryPacket();
+            FtcDashboard dash = FtcDashboard.getInstance();
+            packet.put("time",time.time());
+            dash.sendTelemetryPacket(packet);
+            time.reset();
+        }
+        if(Math.abs(targetVel.angVel)<0.05 && time.time()>1){
             double headingChange = angleCor(1*(targetHeading - pose.heading.toDouble()));
             TelemetryPacket packet = new TelemetryPacket();
             FtcDashboard dash = FtcDashboard.getInstance();
@@ -292,11 +301,7 @@ public final class MecanumDrive {
         FtcDashboard dash = FtcDashboard.getInstance();
         packet.put("wheel power",(wheelVels.leftFront.get(0) / maxPowerMag));
         dash.sendTelemetryPacket(packet);
-        double div = 1;
-        if(Math.abs(wheelVels.leftFront.get(0))>1){
-            div = wheelVels.leftFront.get(0);
-        }
-        leftFront.setPower(wheelVels.leftFront.get(0) / maxPowerMag /div);
+        leftFront.setPower(wheelVels.leftFront.get(0) / maxPowerMag);
         leftBack.setPower(wheelVels.leftBack.get(0) / maxPowerMag);
         rightBack.setPower(wheelVels.rightBack.get(0) / maxPowerMag);
         rightFront.setPower(wheelVels.rightFront.get(0) / maxPowerMag);

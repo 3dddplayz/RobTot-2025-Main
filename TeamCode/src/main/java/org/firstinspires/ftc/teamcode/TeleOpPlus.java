@@ -58,7 +58,7 @@ public class TeleOpPlus extends LinearOpMode {
             driverOveride = true;
             runningActions.add( new SequentialAction(
                     new InstantAction(() -> driverOveride = true),
-                    new InstantAction(() -> Actions.runBlocking(drive.actionBuilder(pose).strafeToLinearHeading(new Vector2d(20+pose.position.x, 20+pose.position.y),pose.heading.toDouble()+Math.PI/2).build())),
+                    new InstantAction(() -> Actions.runBlocking(drive.actionBuilder(pose).strafeToLinearHeading(new Vector2d(0, 0),pose.heading.toDouble()).build())),
                     new InstantAction(() -> driverOveride = false)
 
             ));
