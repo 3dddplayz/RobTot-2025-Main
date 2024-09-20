@@ -51,7 +51,8 @@ import java.util.List;
  */
 @TeleOp(name = "Concept: AprilTag Switchable Cameras", group = "Concept")
 @Disabled
-public class ConceptAprilTagSwitchableCameras extends LinearOpMode {
+public class
+ConceptAprilTagSwitchableCameras extends LinearOpMode {
 
     /*
      * Variables used for switching cameras.

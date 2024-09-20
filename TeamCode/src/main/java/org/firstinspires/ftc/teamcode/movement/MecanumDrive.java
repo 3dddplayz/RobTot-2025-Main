@@ -42,6 +42,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.ReadWriteFile;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
@@ -50,9 +51,23 @@ import org.firstinspires.ftc.teamcode.rrLibs.messages.DriveCommandMessage;
 import org.firstinspires.ftc.teamcode.rrLibs.messages.MecanumCommandMessage;
 import org.firstinspires.ftc.teamcode.rrLibs.messages.MecanumLocalizerInputsMessage;
 import org.firstinspires.ftc.teamcode.rrLibs.messages.PoseMessage;
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
+import org.opencv.core.RotatedRect;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
+import org.openftc.easyopencv.OpenCvCamera;
+import org.openftc.easyopencv.OpenCvCameraFactory;
+import org.openftc.easyopencv.OpenCvCameraRotation;
+import org.openftc.easyopencv.OpenCvPipeline;
+import org.openftc.easyopencv.OpenCvWebcam;
 
 import java.io.File;
 import java.lang.Math;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -92,13 +107,13 @@ public final class MecanumDrive {
         public double maxAngAccel = Math.PI;
 
         // path controller gains
-        public double axialGain = 1.75;
-        public double lateralGain = 1.75;
-        public double headingGain = 1.75; // shared with turn
+        public double axialGain = 12;
+        public double lateralGain = 12;
+        public double headingGain = 12; // shared with turn
 
-        public double axialVelGain = 0.05;
-        public double lateralVelGain = 0.05;
-        public double headingVelGain = 0.05; // shared with turn
+        public double axialVelGain = 1;
+        public double lateralVelGain = 1;
+        public double headingVelGain = .5; // shared with turn
     }
 
     public static Params PARAMS = new Params();
@@ -219,6 +234,9 @@ public final class MecanumDrive {
         }
     }
 
+    OpenCvWebcam cam;
+    public CameraDetectPipeline pipeline;
+    public String team;
     public MecanumDrive(HardwareMap hardwareMap, Pose2d pose) {
 
         this.pose = pose;
@@ -254,10 +272,33 @@ public final class MecanumDrive {
 
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
 
-        localizer = new ThreeDeadWheelLocalizer(hardwareMap, PARAMS.inPerTick);
-        //localizer = new TwoDeadWheelLocalizer(hardwareMap, lazyImu.get(), PARAMS.inPerTick);
+        //localizer = new ThreeDeadWheelLocalizer(hardwareMap, PARAMS.inPerTick);
+        localizer = new TwoDeadWheelLocalizer(hardwareMap, lazyImu.get(), PARAMS.inPerTick);
 
         FlightRecorder.write("MECANUM_PARAMS", PARAMS);
+
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+
+        WebcamName webcamName = hardwareMap.get(WebcamName.class, "webcam");
+        cam = OpenCvCameraFactory.getInstance().createWebcam(webcamName, cameraMonitorViewId);
+
+        pipeline = new CameraDetectPipeline();
+
+        // Open async and start streaming inside opened callback
+        cam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
+            @Override
+            public void onOpened() {
+                cam.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT);
+
+
+                cam.setPipeline(pipeline);
+
+            }
+
+            @Override
+            public void onError(int errorCode) {
+            }
+        });
     }
     public double angleCor(double ang){
         if(Math.abs(ang)>Math.abs(ang+Math.PI*2)){
@@ -278,11 +319,7 @@ public final class MecanumDrive {
         }
         if(Math.abs(targetVel.angVel)<0.05 && time.time()>1){
             double headingChange = angleCor(1*(targetHeading - pose.heading.toDouble()));
-            TelemetryPacket packet = new TelemetryPacket();
-            FtcDashboard dash = FtcDashboard.getInstance();
-            packet.put("hi",targetHeading);
             targetVel = new PoseVelocity2d(new Vector2d(targetVel.linearVel.x,targetVel.linearVel.y),targetVel.angVel+headingChange);
-            dash.sendTelemetryPacket(packet);
         }else targetHeading = pose.heading.toDouble();
 
         setDrivePowers(targetVel);
@@ -559,5 +596,158 @@ public final class MecanumDrive {
         file = AppUtil.getInstance().getSettingsFile("h.json");
         double h = new Double(ReadWriteFile.readFile(file)).doubleValue();
         pose = new Pose2d(x,y,h);
+    }
+
+    class CameraDetectPipeline extends OpenCvPipeline
+    {
+
+        RotatedRect target;
+
+        Scalar blueL = new Scalar(0, 20, 100);
+        Scalar blueU = new Scalar(0, 75, 255);
+
+        Scalar redL = new Scalar(100, 50, 50);
+        Scalar redU = new Scalar(130, 255, 255);
+
+        Scalar yellowL = new Scalar(100, 50, 50);
+        Scalar yellowU = new Scalar(130, 255, 255);
+        @Override
+        public Mat processFrame(Mat input)
+        {
+            Scalar lowerBound;
+            Scalar upperBound;
+
+            List<MatOfPoint> contours = new ArrayList<>();
+            Mat hierarchy = new Mat();
+            Imgproc.cvtColor(input, hierarchy, Imgproc.COLOR_RGB2HSV);
+
+//        // Define range for color bounds in HSV
+            if(team.equals("blue")){
+                lowerBound = blueL;
+                upperBound = blueU;
+            }else{
+                lowerBound = redL;
+                upperBound = redU;
+            }
+
+//
+//        // Create a mask for blue color
+            Mat mask = new Mat();
+            Core.inRange(hierarchy, lowerBound, upperBound, mask);
+            if(true){//eventually but a conditional here to turn off yellow detection
+                Mat yellowMask = new Mat();
+                Core.inRange(hierarchy, yellowL, yellowU, yellowMask);
+                Core.bitwise_or(mask,yellowMask,mask);
+            }
+
+            Mat blueOnly = new Mat();
+            Core.bitwise_and(input, input, blueOnly, mask);
+
+//      Insert Code for Rectangle detections here
+            Imgproc.findContours(mask, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+
+            List<RotatedRect> minRect = new ArrayList<>();
+            for (MatOfPoint contour : contours) {
+                if (Imgproc.contourArea(contour) > 100) { // Adjust this threshold as needed
+                    RotatedRect rect = Imgproc.minAreaRect(new MatOfPoint2f(contour.toArray()));
+                    minRect.add(rect);
+                }
+            }
+
+            // Draw rectangles and get data
+            for (int i = 0; i < minRect.size(); i++) {
+                Point[] rectPoints = new Point[4];
+                minRect.get(i).points(rectPoints);
+                for (int j = 0; j < 4; j++) {
+                    Imgproc.line(blueOnly, rectPoints[j], rectPoints[(j+1) % 4], new Scalar(0, 255, 0), 2);
+                }
+
+                // Get rotation, x, and y for the first rectangle (if any)
+                if (i == 0) {
+                    target = getClosest(minRect);
+                    // You can use these values as needed
+                }
+            }
+            return blueOnly;
+        }
+        public RotatedRect getClosest(List<RotatedRect> list){
+            RotatedRect lowest;
+            RotatedRect temp;
+            double lowestLength;
+            double tempLength;
+
+            if(list.size()>0){
+                lowest = list.get(0);
+                lowestLength = Math.sqrt(Math.pow(lowest.center.x,2)+Math.pow(lowest.center.y,2));
+                for(int i = 1; i < list.size();i++){
+                    temp = list.get(i);
+                    tempLength = Math.sqrt(Math.pow(temp.center.x,2)+Math.pow(temp.center.y,2));
+                    if(tempLength<lowestLength){
+                        lowestLength = tempLength;
+                        lowest = temp;
+                    }
+                }
+                return lowest;
+            }else return null;
+        }
+        public double getRotation() {
+            try {
+                if (!target.equals(null)) {
+                    Point[] rectPoints = new Point[4];
+                    target.points(rectPoints);
+                    Point[] topPoints = new Point[2];
+                    topPoints[0] = rectPoints[0];
+                    topPoints[1] = rectPoints[1];
+                    double distance = Math.sqrt(Math.pow(topPoints[0].x - topPoints[1].x, 2) + Math.pow(topPoints[0].y - topPoints[1].y, 2));
+                    for (int i = 1; i < 4; i++) {
+                        if (distance > Math.sqrt(Math.pow(topPoints[0].x - rectPoints[i].x, 2) + Math.pow(topPoints[0].y - rectPoints[i].y, 2))) {
+                            topPoints[1] = rectPoints[i];
+                            distance = Math.sqrt(Math.pow(topPoints[0].x - rectPoints[i].x, 2) + Math.pow(topPoints[0].y - rectPoints[i].y, 2));
+                        }
+                    }
+                    double avgX = (topPoints[0].x + topPoints[1].x) / 2;
+                    double avgY = (topPoints[0].y + topPoints[1].y) / 2;
+
+                    double angle = 180*(Math.atan((target.center.x - avgX)/(target.center.y - avgY))/Math.PI);
+                    return angle;
+                }
+            }catch(Exception e){
+                return 0;
+            }
+            return 0;
+        }
+
+
+        public double getX() {
+            try{
+                return target.center.x;
+            }catch(Exception e){
+                return 0;
+            }
+
+        }
+
+        public double getY() {
+            try{
+                return target.center.y;
+            }catch(Exception e) {
+                return 0;
+            }
+        }
+    }
+    public double getObjX(){
+        return pipeline.getX();
+    }
+    public double getObjY(){
+        return pipeline.getY();
+    }
+    public double getObjRot(){
+        return pipeline.getRotation();
+    }
+    public void setTeamRed(){
+        team = "red";
+    }
+    public void setTeamBlue(){
+        team = "blue";
     }
 }

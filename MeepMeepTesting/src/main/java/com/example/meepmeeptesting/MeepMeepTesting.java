@@ -22,6 +22,16 @@ public class MeepMeepTesting {
                 .splineTo(new Vector2d(0, 40), Math.PI)
                 .splineTo(new Vector2d(-20, 20), 3*Math.PI/2)
                 .splineTo(new Vector2d(0, 0), 0)
+                .splineTo(new Vector2d(20, 20), Math.PI / 2)
+                .splineTo(new Vector2d(0, 40), Math.PI)
+                .splineTo(new Vector2d(-20, 20), 3*Math.PI/2)
+                .splineTo(new Vector2d(0, 0), 0)
+                .strafeToLinearHeading(new Vector2d(20, 0),-Math.PI / 2)
+                .strafeToLinearHeading(new Vector2d(20, 40),-Math.PI )
+                .strafeToLinearHeading(new Vector2d(-20, 40),-3*Math.PI / 2)
+                .strafeToLinearHeading(new Vector2d(-20, 0),0)
+                .strafeToLinearHeading(new Vector2d(0, 0),0)
+
                 .build());
         meepMeep.setBackground(MeepMeep.Background.FIELD_POWERPLAY_OFFICIAL)
                 .setDarkMode(true)

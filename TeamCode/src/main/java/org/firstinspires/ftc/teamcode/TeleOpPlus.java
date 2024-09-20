@@ -23,23 +23,22 @@ public class TeleOpPlus extends LinearOpMode {
     private List<Action> runningActions = new ArrayList<>();
     boolean driverOveride = false;
 
+    MecanumDrive drive;
     @Override
     public void runOpMode(){
+        drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
+        drive.setTeamBlue();
         waitForStart();
-//        String fileName = "choords.json";
-//        File file = AppUtil.getInstance().getSettingsFile(fileName);
-//        double x = new Double(ReadWriteFile.readFile(file)).doubleValue();
-        MecanumDrive drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
+
         //drive.readPos();
         while(opModeIsActive()){
-            looping(drive);
+            looping();
         }
     }
 
 
-    public void looping(MecanumDrive drive) {
+    public void looping() {
         drive.updatePoseEstimate();
-
         TelemetryPacket packet = new TelemetryPacket();
         Pose2d pose = drive.pose;
 
@@ -62,11 +61,17 @@ public class TeleOpPlus extends LinearOpMode {
                     new InstantAction(() -> driverOveride = false)
 
             ));
+        }else if(gamepad1.b){
+            driverOveride = true;
+            imageRecMove();
         }else driverOveride = false;
         telemetry.addData("Driver Overide: ", driverOveride);
         telemetry.addData("X: ", drive.pose.position.x);
         telemetry.addData("Y: ", drive.pose.position.y);
         telemetry.addData("Heading: ", drive.pose.heading.toDouble());
+        telemetry.addData("Obj X: ", drive.getObjX());
+        telemetry.addData("Obj Y: ", drive.getObjY());
+        telemetry.addData("Obj Rot: ", drive.getObjRot());
         telemetry.update();
         if(!driverOveride) {
             if (gamepad1.dpad_up) {
@@ -83,5 +88,14 @@ public class TeleOpPlus extends LinearOpMode {
             }
         }
         dash.sendTelemetryPacket(packet);
+    }
+    public void imageRecMove(){
+
+            double x = drive.getObjX();
+
+            double xChange = Math.min(Math.max(.005*(130-x),-.5),.5);
+            PoseVelocity2d vel = new PoseVelocity2d(new Vector2d(0,xChange),0);
+            drive.TeleOpMove(vel);
+
     }
 }
