@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.movement;
 
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
+
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.FtcDashboard;
@@ -311,10 +313,6 @@ public final class MecanumDrive {
     ElapsedTime time = new ElapsedTime();
     public void TeleOpMove(PoseVelocity2d targetVel) {
         if(Math.abs(targetVel.angVel)>0.05){
-            TelemetryPacket packet = new TelemetryPacket();
-            FtcDashboard dash = FtcDashboard.getInstance();
-            packet.put("time",time.time());
-            dash.sendTelemetryPacket(packet);
             time.reset();
         }
         if(Math.abs(targetVel.angVel)<0.05 && time.time()>1){
@@ -597,20 +595,53 @@ public final class MecanumDrive {
         double h = new Double(ReadWriteFile.readFile(file)).doubleValue();
         pose = new Pose2d(x,y,h);
     }
+    ElapsedTime time2 = new ElapsedTime();
+    public void AutoGrab(){
+        time2.reset();
+        double x = 0;
+        double y = 0;
+        double rotation = 0;
+        double cam2inch = 1;
+        while(time2.time()<1){
+            x = getObjX();
+            y = getObjY();
+            rotation = getObjRot();
+        }
+        if(x!=-1 && y!=-1) {
+            cam2inch = 1.5 / Math.min(pipeline.target.size.height, pipeline.target.size.width);
+            //set line below once servo is configured
+            //servo.setPostion((rotation+90)/180);
+            Pose2d beginPose = new Pose2d(pose.position.x, pose.position.y, pose.heading.toDouble());
+            com.acmerobotics.roadrunner.ftc.Actions.runBlocking(
+                    this.actionBuilder(beginPose)
+                            .strafeTo(new Vector2d(pose.position.x, (155 - x) * cam2inch), new TranslationalVelConstraint(5.0))
+                            //.strafeToConstantHeading(new Vector2d(0, 0), new TranslationalVelConstraint(5.0))
+                            .build());
+        }else{
+            telemetry.addData("No Target", "Found");
+        }
+    }
+
 
     class CameraDetectPipeline extends OpenCvPipeline
     {
 
         RotatedRect target;
+        // switch use HSV values
+        // Divide H by 2
+        Scalar blueL = new Scalar(200/2, .3*255, .2*255);
+        Scalar blueU = new Scalar(260/2, .85*255, 1.00*255);
 
-        Scalar blueL = new Scalar(0, 20, 100);
-        Scalar blueU = new Scalar(0, 75, 255);
+        //red wraps around the hue spectrum so we need 2 sets of bounds
 
-        Scalar redL = new Scalar(100, 50, 50);
-        Scalar redU = new Scalar(130, 255, 255);
+        Scalar redL1 = new Scalar(345/2, .2*255, .2*255);
+        Scalar redU1 = new Scalar(359/2, .85*255, 1.00*255);
+        Scalar redL2 = new Scalar(0, .2*255, .2*255);
+        Scalar redU2 = new Scalar(7.5, .85*255, 1.00*255);
 
-        Scalar yellowL = new Scalar(100, 50, 50);
-        Scalar yellowU = new Scalar(130, 255, 255);
+        Scalar yellowL = new Scalar(45/2, .2*255, .65*255);
+        Scalar yellowU = new Scalar(60/2, 1*255, 1*255);
+        Boolean trackYellow = true;
         @Override
         public Mat processFrame(Mat input)
         {
@@ -626,22 +657,27 @@ public final class MecanumDrive {
                 lowerBound = blueL;
                 upperBound = blueU;
             }else{
-                lowerBound = redL;
-                upperBound = redU;
+                lowerBound = redL1;
+                upperBound = redU1;
             }
 
 //
 //        // Create a mask for blue color
             Mat mask = new Mat();
             Core.inRange(hierarchy, lowerBound, upperBound, mask);
-            if(true){//eventually but a conditional here to turn off yellow detection
+            if(trackYellow){//eventually but a conditional here to turn off yellow detection
                 Mat yellowMask = new Mat();
                 Core.inRange(hierarchy, yellowL, yellowU, yellowMask);
                 Core.bitwise_or(mask,yellowMask,mask);
             }
+            if(team.equals("red")){
+                Mat redMask = new Mat();
+                Core.inRange(hierarchy, redL2, redU2, redMask);
+                Core.bitwise_or(mask,redMask,mask);
+            }
 
-            Mat blueOnly = new Mat();
-            Core.bitwise_and(input, input, blueOnly, mask);
+            Mat objOnly = new Mat();
+            Core.bitwise_and(input, input, objOnly, mask);
 
 //      Insert Code for Rectangle detections here
             Imgproc.findContours(mask, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
@@ -659,7 +695,7 @@ public final class MecanumDrive {
                 Point[] rectPoints = new Point[4];
                 minRect.get(i).points(rectPoints);
                 for (int j = 0; j < 4; j++) {
-                    Imgproc.line(blueOnly, rectPoints[j], rectPoints[(j+1) % 4], new Scalar(0, 255, 0), 2);
+                    Imgproc.line(objOnly, rectPoints[j], rectPoints[(j+1) % 4], new Scalar(0, 255, 0), 2);
                 }
 
                 // Get rotation, x, and y for the first rectangle (if any)
@@ -668,7 +704,7 @@ public final class MecanumDrive {
                     // You can use these values as needed
                 }
             }
-            return blueOnly;
+            return objOnly;
         }
         public RotatedRect getClosest(List<RotatedRect> list){
             RotatedRect lowest;
@@ -722,7 +758,7 @@ public final class MecanumDrive {
             try{
                 return target.center.x;
             }catch(Exception e){
-                return 0;
+                return -1;
             }
 
         }
@@ -731,7 +767,7 @@ public final class MecanumDrive {
             try{
                 return target.center.y;
             }catch(Exception e) {
-                return 0;
+                return -1;
             }
         }
     }
@@ -749,5 +785,11 @@ public final class MecanumDrive {
     }
     public void setTeamBlue(){
         team = "blue";
+    }
+    public void yellowTrackingOn(){
+        pipeline.trackYellow = true;
+    }
+    public void yellowTrackingOff(){
+        pipeline.trackYellow = false;
     }
 }

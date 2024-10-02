@@ -27,7 +27,7 @@ public class TeleOpPlus extends LinearOpMode {
     @Override
     public void runOpMode(){
         drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
-        drive.setTeamBlue();
+        drive.setTeamRed();
         waitForStart();
 
         //drive.readPos();
@@ -64,6 +64,9 @@ public class TeleOpPlus extends LinearOpMode {
         }else if(gamepad1.b){
             driverOveride = true;
             imageRecMove();
+        }else if(gamepad1.y) {
+            driverOveride = true;
+            drive.AutoGrab();
         }else driverOveride = false;
         telemetry.addData("Driver Overide: ", driverOveride);
         telemetry.addData("X: ", drive.pose.position.x);

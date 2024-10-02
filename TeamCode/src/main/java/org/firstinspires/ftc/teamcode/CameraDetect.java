@@ -131,7 +131,7 @@ class CameraDetectPipeline extends OpenCvPipeline
                 // You can use these values as needed
             }
         }
-        return blueOnly;
+        return input;
     }
 
     public double getRotation() {
