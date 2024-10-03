@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.movement;
 
+import static android.os.SystemClock.sleep;
 import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
 
 import androidx.annotation.NonNull;
@@ -40,6 +41,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.ReadWriteFile;
@@ -134,6 +136,8 @@ public final class MecanumDrive {
             new ProfileAccelConstraint(PARAMS.minProfileAccel, PARAMS.maxProfileAccel);
 
     public final DcMotorEx leftFront, leftBack, rightBack, rightFront;
+
+    public final Servo extendo;
 
     public final VoltageSensor voltageSensor;
 
@@ -266,6 +270,8 @@ public final class MecanumDrive {
         // TODO: reverse motor directions if needed
         leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
         leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        extendo = hardwareMap.get(Servo.class, "extendo");
 
         // TODO: make sure your config has an IMU with this name (can be BNO or BHI)
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
@@ -629,17 +635,17 @@ public final class MecanumDrive {
         RotatedRect target;
         // switch use HSV values
         // Divide H by 2
-        Scalar blueL = new Scalar(200/2, .3*255, .2*255);
+        Scalar blueL = new Scalar(200/2, .6*255, .1*255);
         Scalar blueU = new Scalar(260/2, .85*255, 1.00*255);
 
         //red wraps around the hue spectrum so we need 2 sets of bounds
 
-        Scalar redL1 = new Scalar(345/2, .2*255, .2*255);
-        Scalar redU1 = new Scalar(359/2, .85*255, 1.00*255);
-        Scalar redL2 = new Scalar(0, .2*255, .2*255);
-        Scalar redU2 = new Scalar(7.5, .85*255, 1.00*255);
+        Scalar redL1 = new Scalar(345/2, .6*255, .1*255);
+        Scalar redU1 = new Scalar(359/2, 1.*255, 1.00*255);
+        Scalar redL2 = new Scalar(0, .6*255, .1*255);
+        Scalar redU2 = new Scalar(7.5, 1.*255, 1.00*255);
 
-        Scalar yellowL = new Scalar(45/2, .2*255, .65*255);
+        Scalar yellowL = new Scalar(45/2, .6*255, .1*255);
         Scalar yellowU = new Scalar(60/2, 1*255, 1*255);
         Boolean trackYellow = true;
         @Override
@@ -649,6 +655,7 @@ public final class MecanumDrive {
             Scalar upperBound;
 
             List<MatOfPoint> contours = new ArrayList<>();
+            List<MatOfPoint> contoursYellow = new ArrayList<>();
             Mat hierarchy = new Mat();
             Imgproc.cvtColor(input, hierarchy, Imgproc.COLOR_RGB2HSV);
 
@@ -665,11 +672,10 @@ public final class MecanumDrive {
 //        // Create a mask for blue color
             Mat mask = new Mat();
             Core.inRange(hierarchy, lowerBound, upperBound, mask);
-            if(trackYellow){//eventually but a conditional here to turn off yellow detection
-                Mat yellowMask = new Mat();
-                Core.inRange(hierarchy, yellowL, yellowU, yellowMask);
-                Core.bitwise_or(mask,yellowMask,mask);
-            }
+
+            Mat yellowMask = new Mat();
+            Core.inRange(hierarchy, yellowL, yellowU, yellowMask);
+
             if(team.equals("red")){
                 Mat redMask = new Mat();
                 Core.inRange(hierarchy, redL2, redU2, redMask);
@@ -678,6 +684,9 @@ public final class MecanumDrive {
 
             Mat objOnly = new Mat();
             Core.bitwise_and(input, input, objOnly, mask);
+
+            //Mat output = objOnly;
+            Mat output = input;
 
 //      Insert Code for Rectangle detections here
             Imgproc.findContours(mask, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
@@ -695,7 +704,7 @@ public final class MecanumDrive {
                 Point[] rectPoints = new Point[4];
                 minRect.get(i).points(rectPoints);
                 for (int j = 0; j < 4; j++) {
-                    Imgproc.line(objOnly, rectPoints[j], rectPoints[(j+1) % 4], new Scalar(0, 255, 0), 2);
+                    Imgproc.line(output, rectPoints[j], rectPoints[(j+1) % 4], new Scalar(0, 255, 0), 2);
                 }
 
                 // Get rotation, x, and y for the first rectangle (if any)
@@ -704,7 +713,35 @@ public final class MecanumDrive {
                     // You can use these values as needed
                 }
             }
-            return objOnly;
+            if(trackYellow){//eventually but a conditional here to turn off yellow detection
+//                Core.bitwise_or(mask,yellowMask,mask);
+
+                Imgproc.findContours(yellowMask, contoursYellow, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
+
+                List<RotatedRect> minRectYellow = new ArrayList<>();
+                for (MatOfPoint contour : contoursYellow) {
+                    if (Imgproc.contourArea(contour) > 100) { // Adjust this threshold as needed
+                        RotatedRect rect = Imgproc.minAreaRect(new MatOfPoint2f(contour.toArray()));
+                        minRectYellow.add(rect);
+                    }
+                }
+
+                // Draw rectangles and get data
+                for (int i = 0; i < minRectYellow.size(); i++) {
+                    Point[] rectPoints = new Point[4];
+                    minRectYellow.get(i).points(rectPoints);
+                    for (int j = 0; j < 4; j++) {
+                        Imgproc.line(output, rectPoints[j], rectPoints[(j+1) % 4], new Scalar(0, 255, 0), 2);
+                    }
+
+                    // Get rotation, x, and y for the first rectangle (if any)
+                    if (i == 0) {
+                        target = getClosest(minRect);
+                        // You can use these values as needed
+                    }
+                }
+            }
+            return output;
         }
         public RotatedRect getClosest(List<RotatedRect> list){
             RotatedRect lowest;
@@ -791,5 +828,11 @@ public final class MecanumDrive {
     }
     public void yellowTrackingOff(){
         pipeline.trackYellow = false;
+    }
+    public void servoTest(){
+        extendo.setPosition(1);
+        sleep(10000);
+        extendo.setPosition(0);
+        sleep(10000);
     }
 }

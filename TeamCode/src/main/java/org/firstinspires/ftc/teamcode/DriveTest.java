@@ -17,14 +17,8 @@ public final class DriveTest extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         Pose2d beginPose = new Pose2d(0, 0, 0);
         MecanumDrive drive = new MecanumDrive(hardwareMap, beginPose);
-
+        drive.setTeamBlue();
         waitForStart();
-        double x = drive.getObjX();
-        Actions.runBlocking(
-                drive.actionBuilder(beginPose)
-                        .splineToLinearHeading(new Pose2d(x, 0, 0), Math.PI / 2, new TranslationalVelConstraint(5.0))
-                        //.strafeToConstantHeading(new Vector2d(0, 0), new TranslationalVelConstraint(5.0))
-                        .build());
-        drive.writePos();
+        drive.servoTest();
     }
 }

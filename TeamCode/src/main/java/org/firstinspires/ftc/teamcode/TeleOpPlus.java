@@ -29,7 +29,7 @@ public class TeleOpPlus extends LinearOpMode {
         drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
         drive.setTeamRed();
         waitForStart();
-
+        drive.extendo.setPosition(.141);
         //drive.readPos();
         while(opModeIsActive()){
             looping();
@@ -41,6 +41,7 @@ public class TeleOpPlus extends LinearOpMode {
         drive.updatePoseEstimate();
         TelemetryPacket packet = new TelemetryPacket();
         Pose2d pose = drive.pose;
+        double servPos = drive.extendo.getPosition();
 
         // updated based on gamepads
 
@@ -89,7 +90,10 @@ public class TeleOpPlus extends LinearOpMode {
             else {
                 drive.TeleOpMove(new PoseVelocity2d(new Vector2d(-gamepad1.left_stick_y, -gamepad1.left_stick_x), -gamepad1.right_stick_x));
             }
+
         }
+        drive.extendo.setPosition(servPos-gamepad2.right_stick_y*.0025);
+        telemetry.addData("extendo",servPos);
         dash.sendTelemetryPacket(packet);
     }
     public void imageRecMove(){
