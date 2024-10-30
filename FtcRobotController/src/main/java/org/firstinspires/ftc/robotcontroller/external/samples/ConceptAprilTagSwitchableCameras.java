@@ -51,8 +51,7 @@ import java.util.List;
  */
 @TeleOp(name = "Concept: AprilTag Switchable Cameras", group = "Concept")
 @Disabled
-public class
-ConceptAprilTagSwitchableCameras extends LinearOpMode {
+public class ConceptAprilTagSwitchableCameras extends LinearOpMode {
 
     /*
      * Variables used for switching cameras.
@@ -78,7 +77,7 @@ ConceptAprilTagSwitchableCameras extends LinearOpMode {
 
         // Wait for the DS start button to be touched.
         telemetry.addData("DS preview on/off", "3 dots, Camera Stream");
-        telemetry.addData(">", "Touch Play to start OpMode");
+        telemetry.addData(">", "Touch START to start OpMode");
         telemetry.update();
         waitForStart();
 

@@ -13,7 +13,8 @@ import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.movement.MecanumDrive;
+import org.firstinspires.ftc.teamcode.sections.Lifters;
+import org.firstinspires.ftc.teamcode.sections.MecanumDrive;
 
 import java.util.*;
 
@@ -22,14 +23,14 @@ public class TeleOpPlus extends LinearOpMode {
     private FtcDashboard dash = FtcDashboard.getInstance();
     private List<Action> runningActions = new ArrayList<>();
     boolean driverOveride = false;
-
     MecanumDrive drive;
+    Lifters lift;
     @Override
     public void runOpMode(){
         drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
+        lift = new Lifters(hardwareMap);
         drive.setTeamRed();
         waitForStart();
-        drive.extendo.setPosition(.141);
         //drive.readPos();
         while(opModeIsActive()){
             looping();
@@ -41,7 +42,6 @@ public class TeleOpPlus extends LinearOpMode {
         drive.updatePoseEstimate();
         TelemetryPacket packet = new TelemetryPacket();
         Pose2d pose = drive.pose;
-        double servPos = drive.extendo.getPosition();
 
         // updated based on gamepads
 
@@ -67,7 +67,7 @@ public class TeleOpPlus extends LinearOpMode {
             imageRecMove();
         }else if(gamepad1.y) {
             driverOveride = true;
-            drive.AutoGrab();
+            drive.autoGrabTest();
         }else driverOveride = false;
         telemetry.addData("Driver Overide: ", driverOveride);
         telemetry.addData("X: ", drive.pose.position.x);
@@ -90,16 +90,14 @@ public class TeleOpPlus extends LinearOpMode {
             else {
                 drive.TeleOpMove(new PoseVelocity2d(new Vector2d(-gamepad1.left_stick_y, -gamepad1.left_stick_x), -gamepad1.right_stick_x));
             }
-
         }
-        drive.extendo.setPosition(servPos-gamepad2.right_stick_y*.0025);
-        telemetry.addData("extendo",servPos);
+        lift.setHorLifterPower(-gamepad1.right_stick_y);
+        lift.setVertLifterPower(-gamepad1.left_stick_y);
+
         dash.sendTelemetryPacket(packet);
     }
     public void imageRecMove(){
-
             double x = drive.getObjX();
-
             double xChange = Math.min(Math.max(.005*(130-x),-.5),.5);
             PoseVelocity2d vel = new PoseVelocity2d(new Vector2d(0,xChange),0);
             drive.TeleOpMove(vel);

@@ -46,7 +46,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
-import org.firstinspires.ftc.teamcode.movement.Localizer;
+import org.firstinspires.ftc.teamcode.sections.Localizer;
 import org.firstinspires.ftc.teamcode.rrLibs.messages.Drawing;
 import org.firstinspires.ftc.teamcode.rrLibs.messages.DriveCommandMessage;
 import org.firstinspires.ftc.teamcode.rrLibs.messages.PoseMessage;

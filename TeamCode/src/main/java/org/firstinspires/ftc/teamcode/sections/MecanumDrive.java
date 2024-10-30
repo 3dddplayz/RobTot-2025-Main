@@ -1,11 +1,9 @@
-package org.firstinspires.ftc.teamcode.movement;
+package org.firstinspires.ftc.teamcode.sections;
 
-import static android.os.SystemClock.sleep;
 import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
 
 import androidx.annotation.NonNull;
 
-import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
@@ -41,7 +39,6 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.ReadWriteFile;
@@ -83,9 +80,9 @@ public final class MecanumDrive {
         // TODO: fill in these values based on
         //   see https://ftc-docs.firstinspires.org/en/latest/programming_resources/imu/imu.html?highlight=imu#physical-hub-mounting
         public RevHubOrientationOnRobot.LogoFacingDirection logoFacingDirection =
-                RevHubOrientationOnRobot.LogoFacingDirection.UP;
+                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT;
         public RevHubOrientationOnRobot.UsbFacingDirection usbFacingDirection =
-                RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
+                RevHubOrientationOnRobot.UsbFacingDirection.UP;
 
         // drive model parameters
         //2893
@@ -117,7 +114,12 @@ public final class MecanumDrive {
 
         public double axialVelGain = 1;
         public double lateralVelGain = 1;
-        public double headingVelGain = .5; // shared with turn
+        public double headingVelGain = .5;
+
+        public int lifterLimitHigh = 8000;
+        public int lifterLimitLow = 0;
+        public double lifterCorCoef = .25;
+        public boolean displayColorsOnly = false;
     }
 
     public static Params PARAMS = new Params();
@@ -136,8 +138,6 @@ public final class MecanumDrive {
             new ProfileAccelConstraint(PARAMS.minProfileAccel, PARAMS.maxProfileAccel);
 
     public final DcMotorEx leftFront, leftBack, rightBack, rightFront;
-
-    public final Servo extendo;
 
     public final VoltageSensor voltageSensor;
 
@@ -242,7 +242,7 @@ public final class MecanumDrive {
 
     OpenCvWebcam cam;
     public CameraDetectPipeline pipeline;
-    public String team;
+    public String team = "blue";
     public MecanumDrive(HardwareMap hardwareMap, Pose2d pose) {
 
         this.pose = pose;
@@ -257,10 +257,11 @@ public final class MecanumDrive {
 
         // TODO: make sure your config has motors with these names (or change them)
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
-        leftFront = hardwareMap.get(DcMotorEx.class, "leftFo3");
+        leftFront = hardwareMap.get(DcMotorEx.class, "leftFo2");
         leftBack = hardwareMap.get(DcMotorEx.class, "leftB");
-        rightBack = hardwareMap.get(DcMotorEx.class, "rightBo2");
+        rightBack = hardwareMap.get(DcMotorEx.class, "rightBo3");
         rightFront = hardwareMap.get(DcMotorEx.class, "rightFo1");
+
 
         leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -271,7 +272,6 @@ public final class MecanumDrive {
         leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
         leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        extendo = hardwareMap.get(Servo.class, "extendo");
 
         // TODO: make sure your config has an IMU with this name (can be BNO or BHI)
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
@@ -280,8 +280,8 @@ public final class MecanumDrive {
 
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
 
-        //localizer = new ThreeDeadWheelLocalizer(hardwareMap, PARAMS.inPerTick);
-        localizer = new TwoDeadWheelLocalizer(hardwareMap, lazyImu.get(), PARAMS.inPerTick);
+        localizer = new ThreeDeadWheelLocalizer(hardwareMap, PARAMS.inPerTick);
+        //localizer = new TwoDeadWheelLocalizer(hardwareMap, lazyImu.get(), PARAMS.inPerTick);
 
         FlightRecorder.write("MECANUM_PARAMS", PARAMS);
 
@@ -338,10 +338,6 @@ public final class MecanumDrive {
         for (DualNum<Time> power : wheelVels.all()) {
             maxPowerMag = Math.max(maxPowerMag, power.value());
         }
-        TelemetryPacket packet = new TelemetryPacket();
-        FtcDashboard dash = FtcDashboard.getInstance();
-        packet.put("wheel power",(wheelVels.leftFront.get(0) / maxPowerMag));
-        dash.sendTelemetryPacket(packet);
         leftFront.setPower(wheelVels.leftFront.get(0) / maxPowerMag);
         leftBack.setPower(wheelVels.leftBack.get(0) / maxPowerMag);
         rightBack.setPower(wheelVels.rightBack.get(0) / maxPowerMag);
@@ -602,7 +598,30 @@ public final class MecanumDrive {
         pose = new Pose2d(x,y,h);
     }
     ElapsedTime time2 = new ElapsedTime();
-    public void AutoGrab(){
+    public Action autoGrabLoop(){
+        MecanumDrive drive = this;
+        return new Action() {
+            double x,y,rotation,cam2inch;
+            ElapsedTime time = new ElapsedTime();
+            @Override
+            public boolean run (@NonNull TelemetryPacket packet){
+                if(time.time()<1){
+                    x = getObjX();
+                    y = getObjY();
+                    rotation = getObjRot();
+                    return true;
+                }else if((160-x)/160>.05&&(120-y)/120>.05){
+                    double xChange = Math.min(Math.max(.005*(160-x),-.5),.5);
+                    double yChange = Math.min(Math.max(.005*(120-y),-.5),.5);
+                    PoseVelocity2d vel = new PoseVelocity2d(new Vector2d(yChange,xChange),0);
+                    drive.setDrivePowers(vel);
+                    return true;
+                }
+                return false;
+            }
+        };
+    }
+    public void autoGrabTest(){
         time2.reset();
         double x = 0;
         double y = 0;
@@ -627,6 +646,30 @@ public final class MecanumDrive {
             telemetry.addData("No Target", "Found");
         }
     }
+    public Action autoGrab(){
+        time2.reset();
+        double x = 0;
+        double y = 0;
+        double rotation = 0;
+        double cam2inch = 1;
+        while(time2.time()<1){
+            x = getObjX();
+            y = getObjY();
+            rotation = getObjRot();
+        }
+        if(x!=-1 && y!=-1) {
+            cam2inch = 1.5 / Math.min(pipeline.target.size.height, pipeline.target.size.width);
+            //set line below once servo is configured
+            //servo.setPostion((rotation+90)/180);
+            Pose2d beginPose = new Pose2d(pose.position.x, pose.position.y, pose.heading.toDouble());
+            return this.actionBuilder(beginPose)
+                            .strafeTo(new Vector2d(pose.position.x, (155 - x) * cam2inch), new TranslationalVelConstraint(5.0))
+                            //.strafeToConstantHeading(new Vector2d(0, 0), new TranslationalVelConstraint(5.0))
+                            .build();
+        }else{
+            return new SleepAction(1);
+        }
+    }
 
 
     class CameraDetectPipeline extends OpenCvPipeline
@@ -645,9 +688,15 @@ public final class MecanumDrive {
         Scalar redL2 = new Scalar(0, .6*255, .1*255);
         Scalar redU2 = new Scalar(7.5, 1.*255, 1.00*255);
 
-        Scalar yellowL = new Scalar(45/2, .6*255, .1*255);
-        Scalar yellowU = new Scalar(60/2, 1*255, 1*255);
+        Scalar yellowL = new Scalar(15, 150, 150);
+        Scalar yellowU = new Scalar(35, 255, 255);
         Boolean trackYellow = true;
+
+        //inches
+        double width = 1.5;
+        double length = 3.5;
+        double wlratio = 1.5/3.5;
+
         @Override
         public Mat processFrame(Mat input)
         {
@@ -659,52 +708,66 @@ public final class MecanumDrive {
             Mat hierarchy = new Mat();
             Imgproc.cvtColor(input, hierarchy, Imgproc.COLOR_RGB2HSV);
 
-//        // Define range for color bounds in HSV
-            if(team.equals("blue")){
-                lowerBound = blueL;
-                upperBound = blueU;
-            }else{
-                lowerBound = redL1;
-                upperBound = redU1;
-            }
-
 //
 //        // Create a mask for blue color
-            Mat mask = new Mat();
-            Core.inRange(hierarchy, lowerBound, upperBound, mask);
+            Mat blueMask = new Mat();
+            Core.inRange(hierarchy, blueL, blueU, blueMask);
+
+            Mat redMask = new Mat();
+            Mat redMask2 = new Mat();
+            Core.inRange(hierarchy, redL1, redU1, redMask);
+            Core.inRange(hierarchy, redL2, redU2, redMask2);
+            Core.bitwise_or(redMask,redMask2,redMask);
 
             Mat yellowMask = new Mat();
             Core.inRange(hierarchy, yellowL, yellowU, yellowMask);
-
+            Mat selectedColorMask = new Mat();
             if(team.equals("red")){
-                Mat redMask = new Mat();
-                Core.inRange(hierarchy, redL2, redU2, redMask);
-                Core.bitwise_or(mask,redMask,mask);
-            }
-
+                selectedColorMask = redMask;
+            }else selectedColorMask = blueMask;
+            Mat output = new Mat();
             Mat objOnly = new Mat();
-            Core.bitwise_and(input, input, objOnly, mask);
-
-            //Mat output = objOnly;
-            Mat output = input;
-
+            if(PARAMS.displayColorsOnly) {
+                if(trackYellow){
+                    Mat dualMask = new Mat();
+                    Core.bitwise_or(yellowMask, selectedColorMask, dualMask);
+                    Core.bitwise_and(input, input, output, dualMask);
+                }else{
+                    Core.bitwise_and(input, selectedColorMask, output);
+                }
+            }else{
+                output = input;
+            }
 //      Insert Code for Rectangle detections here
+            output = addRect(output, selectedColorMask, hierarchy);
+            if(trackYellow){
+                output = addRect(output, yellowMask, hierarchy);
+            }else {
+                Core.bitwise_and(input, input, objOnly, selectedColorMask);
+            }
+            return output;
+        }
+        private Mat addRect(Mat input,Mat mask,Mat hierarchy){
+            List<MatOfPoint> contours = new ArrayList<>();
             Imgproc.findContours(mask, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
 
             List<RotatedRect> minRect = new ArrayList<>();
             for (MatOfPoint contour : contours) {
                 if (Imgproc.contourArea(contour) > 100) { // Adjust this threshold as needed
                     RotatedRect rect = Imgproc.minAreaRect(new MatOfPoint2f(contour.toArray()));
-                    minRect.add(rect);
+                    double rat = Math.min(rect.size.height, rect.size.width)/Math.max(rect.size.height, rect.size.width);
+                    if(Math.abs(rat-wlratio)/wlratio<0.175){
+                        minRect.add(rect);
+                    }
+
                 }
             }
-
             // Draw rectangles and get data
             for (int i = 0; i < minRect.size(); i++) {
                 Point[] rectPoints = new Point[4];
                 minRect.get(i).points(rectPoints);
                 for (int j = 0; j < 4; j++) {
-                    Imgproc.line(output, rectPoints[j], rectPoints[(j+1) % 4], new Scalar(0, 255, 0), 2);
+                    Imgproc.line(input, rectPoints[j], rectPoints[(j+1) % 4], new Scalar(0, 255, 0), 4);
                 }
 
                 // Get rotation, x, and y for the first rectangle (if any)
@@ -713,35 +776,7 @@ public final class MecanumDrive {
                     // You can use these values as needed
                 }
             }
-            if(trackYellow){//eventually but a conditional here to turn off yellow detection
-//                Core.bitwise_or(mask,yellowMask,mask);
-
-                Imgproc.findContours(yellowMask, contoursYellow, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
-
-                List<RotatedRect> minRectYellow = new ArrayList<>();
-                for (MatOfPoint contour : contoursYellow) {
-                    if (Imgproc.contourArea(contour) > 100) { // Adjust this threshold as needed
-                        RotatedRect rect = Imgproc.minAreaRect(new MatOfPoint2f(contour.toArray()));
-                        minRectYellow.add(rect);
-                    }
-                }
-
-                // Draw rectangles and get data
-                for (int i = 0; i < minRectYellow.size(); i++) {
-                    Point[] rectPoints = new Point[4];
-                    minRectYellow.get(i).points(rectPoints);
-                    for (int j = 0; j < 4; j++) {
-                        Imgproc.line(output, rectPoints[j], rectPoints[(j+1) % 4], new Scalar(0, 255, 0), 2);
-                    }
-
-                    // Get rotation, x, and y for the first rectangle (if any)
-                    if (i == 0) {
-                        target = getClosest(minRect);
-                        // You can use these values as needed
-                    }
-                }
-            }
-            return output;
+            return input;
         }
         public RotatedRect getClosest(List<RotatedRect> list){
             RotatedRect lowest;
@@ -828,11 +863,5 @@ public final class MecanumDrive {
     }
     public void yellowTrackingOff(){
         pipeline.trackYellow = false;
-    }
-    public void servoTest(){
-        extendo.setPosition(1);
-        sleep(10000);
-        extendo.setPosition(0);
-        sleep(10000);
     }
 }
