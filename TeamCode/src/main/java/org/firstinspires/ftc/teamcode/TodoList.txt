@@ -1,0 +1,2 @@
+1. TEST ODOMETRY
+2. implement splitting algorithm for image rec

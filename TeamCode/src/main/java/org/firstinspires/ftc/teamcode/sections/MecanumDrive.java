@@ -91,12 +91,12 @@ public final class MecanumDrive {
         //in/mm = 25.4
         public double inPerTick = (48 * Math.PI) / (2000 * 25.4);//.0028949
         public double lateralInPerTick = inPerTick;
-        public double trackWidthTicks = 3169.3267881669526;
+        public double trackWidthTicks = 3813.1641216849725;
 
         // feedforward parameters (in tick units)
-        public double kS = 1.0755508833750609;
-        public double kV = 0.0006032725545455405;
-        public double kA = 0.0001;
+        public double kS = 1.450568381580573;
+        public double kV = 0.0005909902891222143;
+        public double kA = 0.00010;
 
         // path profile parameters (in inches)
         public double maxWheelVel = 50;
@@ -108,9 +108,9 @@ public final class MecanumDrive {
         public double maxAngAccel = Math.PI;
 
         // path controller gains
-        public double axialGain = 12;
-        public double lateralGain = 12;
-        public double headingGain = 12; // shared with turn
+        public double axialGain = 8;
+        public double lateralGain = 8;
+        public double headingGain = 8; // shared with turn
 
         public double axialVelGain = 1;
         public double lateralVelGain = 1;
@@ -280,8 +280,8 @@ public final class MecanumDrive {
 
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
 
-        localizer = new ThreeDeadWheelLocalizer(hardwareMap, PARAMS.inPerTick);
-        //localizer = new TwoDeadWheelLocalizer(hardwareMap, lazyImu.get(), PARAMS.inPerTick);
+        //localizer = new ThreeDeadWheelLocalizer(hardwareMap, PARAMS.inPerTick);
+        localizer = new TwoDeadWheelLocalizer(hardwareMap, lazyImu.get(), PARAMS.inPerTick);
 
         FlightRecorder.write("MECANUM_PARAMS", PARAMS);
 
@@ -378,7 +378,7 @@ public final class MecanumDrive {
             targetPoseWriter.write(new PoseMessage(txWorldTarget.value()));
             PoseVelocity2d robotVelRobot = updatePoseEstimate();
             Pose2d error = txWorldTarget.value().minusExp(pose);
-            if ((t >= timeTrajectory.duration && error.position.norm() < 0.25  //extra correction
+            if ((t >= timeTrajectory.duration && error.position.norm() < 1  //extra correction
                     && robotVelRobot.linearVel.norm() < 0.5)
                     || t >= timeTrajectory.duration + 2) {
                 leftFront.setPower(0);
@@ -597,7 +597,6 @@ public final class MecanumDrive {
         double h = new Double(ReadWriteFile.readFile(file)).doubleValue();
         pose = new Pose2d(x,y,h);
     }
-    ElapsedTime time2 = new ElapsedTime();
     public Action autoGrabLoop(){
         MecanumDrive drive = this;
         return new Action() {
@@ -621,6 +620,7 @@ public final class MecanumDrive {
             }
         };
     }
+    ElapsedTime time2 = new ElapsedTime();
     public void autoGrabTest(){
         time2.reset();
         double x = 0;
@@ -659,13 +659,11 @@ public final class MecanumDrive {
         }
         if(x!=-1 && y!=-1) {
             cam2inch = 1.5 / Math.min(pipeline.target.size.height, pipeline.target.size.width);
-            //set line below once servo is configured
-            //servo.setPostion((rotation+90)/180);
             Pose2d beginPose = new Pose2d(pose.position.x, pose.position.y, pose.heading.toDouble());
             return this.actionBuilder(beginPose)
-                            .strafeTo(new Vector2d(pose.position.x, (155 - x) * cam2inch), new TranslationalVelConstraint(5.0))
-                            //.strafeToConstantHeading(new Vector2d(0, 0), new TranslationalVelConstraint(5.0))
-                            .build();
+                .strafeTo(new Vector2d(pose.position.x, (155 - x) * cam2inch), new TranslationalVelConstraint(5.0))
+                //.strafeToConstantHeading(new Vector2d(0, 0), new TranslationalVelConstraint(5.0))
+                .build();
         }else{
             return new SleepAction(1);
         }
@@ -851,6 +849,12 @@ public final class MecanumDrive {
     }
     public double getObjRot(){
         return pipeline.getRotation();
+    }
+    public void pauseCamera(){
+        cam.pauseViewport();
+    }
+    public void resumeCamera(){
+        cam.resumeViewport();
     }
     public void setTeamRed(){
         team = "red";

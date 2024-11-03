@@ -13,6 +13,7 @@ import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.teamcode.sections.Intake;
 import org.firstinspires.ftc.teamcode.sections.Lifters;
 import org.firstinspires.ftc.teamcode.sections.MecanumDrive;
 
@@ -25,10 +26,13 @@ public class TeleOpPlus extends LinearOpMode {
     boolean driverOveride = false;
     MecanumDrive drive;
     Lifters lift;
+    Intake intk;
     @Override
     public void runOpMode(){
         drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
         lift = new Lifters(hardwareMap);
+        intk = new Intake(hardwareMap);
+
         drive.setTeamRed();
         waitForStart();
         //drive.readPos();
@@ -54,21 +58,21 @@ public class TeleOpPlus extends LinearOpMode {
             }
         }
         runningActions = newActions;
-        if (gamepad1.a) {
-            driverOveride = true;
-            runningActions.add( new SequentialAction(
-                    new InstantAction(() -> driverOveride = true),
-                    new InstantAction(() -> Actions.runBlocking(drive.actionBuilder(pose).strafeToLinearHeading(new Vector2d(0, 0),pose.heading.toDouble()).build())),
-                    new InstantAction(() -> driverOveride = false)
-
-            ));
-        }else if(gamepad1.b){
-            driverOveride = true;
-            imageRecMove();
-        }else if(gamepad1.y) {
-            driverOveride = true;
-            drive.autoGrabTest();
-        }else driverOveride = false;
+//        if (gamepad1.a) {
+//            driverOveride = true;
+//            runningActions.add( new SequentialAction(
+//                    new InstantAction(() -> driverOveride = true),
+//                    new InstantAction(() -> Actions.runBlocking(drive.actionBuilder(pose).strafeToLinearHeading(new Vector2d(0, 0),pose.heading.toDouble()).build())),
+//                    new InstantAction(() -> driverOveride = false)
+//
+//            ));
+//        }else if(gamepad1.b){
+//            driverOveride = true;
+//            imageRecMove();
+//        }else if(gamepad1.y) {
+//            driverOveride = true;
+//            drive.autoGrabTest();
+//        }else driverOveride = false;
         telemetry.addData("Driver Overide: ", driverOveride);
         telemetry.addData("X: ", drive.pose.position.x);
         telemetry.addData("Y: ", drive.pose.position.y);
@@ -76,6 +80,8 @@ public class TeleOpPlus extends LinearOpMode {
         telemetry.addData("Obj X: ", drive.getObjX());
         telemetry.addData("Obj Y: ", drive.getObjY());
         telemetry.addData("Obj Rot: ", drive.getObjRot());
+        telemetry.addData("Lifter R: ", lift.vertLifterR.getCurrentPosition());
+        telemetry.addData("Lifter L: ", lift.vertLifterL.getCurrentPosition());
         telemetry.update();
         if(!driverOveride) {
             if (gamepad1.dpad_up) {
@@ -91,8 +97,13 @@ public class TeleOpPlus extends LinearOpMode {
                 drive.TeleOpMove(new PoseVelocity2d(new Vector2d(-gamepad1.left_stick_y, -gamepad1.left_stick_x), -gamepad1.right_stick_x));
             }
         }
-        lift.setHorLifterPower(-gamepad1.right_stick_y);
-        lift.setVertLifterPower(-gamepad1.left_stick_y);
+        if(gamepad2.a){
+            intk.intakeIn();
+        } else if(gamepad2.b) {
+            intk.intakeOut();
+        }else intk.intakeOff();
+        lift.setHorLifterPower(-gamepad2.right_stick_y);
+        lift.setVertLifterPower(-gamepad2.right_trigger+gamepad2.left_trigger);
 
         dash.sendTelemetryPacket(packet);
     }

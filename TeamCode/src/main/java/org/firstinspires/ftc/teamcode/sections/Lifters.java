@@ -12,24 +12,29 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 public class Lifters {
-    DcMotorEx vertLifterR, vertLifterL;
+    public DcMotor vertLifterR, vertLifterL;
     Servo  horLifterR, horLifterL;
     double horLiftPos = 0;
     public static class Params {
-        public int lifterLimitHigh = 8000;
+        public int lifterLimitHigh = 4350;
         public int lifterLimitLow = 0;
-        public double lifterCorCoef = .25;
+        public double lifterCorCoef = .0008;
         public double horPowerCoeff = .0025;
     }
     Params PARAMS = new Params();
     public Lifters(HardwareMap hardwareMap) {
-        vertLifterR = hardwareMap.get(DcMotorEx.class, "lifterR");
+        vertLifterR = hardwareMap.get(DcMotor.class, "lifterR");
         vertLifterR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        vertLifterR.setDirection(DcMotorSimple.Direction.FORWARD);
+        vertLifterR.setDirection(DcMotor.Direction.REVERSE);
+        vertLifterR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        vertLifterR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        vertLifterL = hardwareMap.get(DcMotorEx.class, "lifterL");
+        vertLifterL = hardwareMap.get(DcMotor.class, "lifterL");
         vertLifterL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        vertLifterL.setDirection(DcMotorSimple.Direction.REVERSE);
+        vertLifterL.setDirection(DcMotor.Direction.FORWARD);
+        vertLifterL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        vertLifterL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
 
         horLifterR = hardwareMap.get(Servo.class,"horLifterR");
         horLifterL = hardwareMap.get(Servo.class,"horLifterL");
@@ -39,7 +44,7 @@ public class Lifters {
 
     public class SetVertLifterPos implements Action {
         double rPos,lPos,lifterAvgPos;
-        int pos = 0;
+        int pos = 400;
         double power = 0;
         @Override
         public boolean run(@NonNull TelemetryPacket packet) {
@@ -52,7 +57,7 @@ public class Lifters {
             vertLifterL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             vertLifterR.setPower(power + ((lifterAvgPos - rPos) * PARAMS.lifterCorCoef));
             vertLifterR.setPower(power + ((lifterAvgPos - lPos) * PARAMS.lifterCorCoef));
-            return (pos-lifterAvgPos)/pos < .01;
+            return Math.abs((pos-lifterAvgPos)/pos) < .01;
         }
     }
     //stupid setup sh*t
@@ -68,15 +73,16 @@ public class Lifters {
         double lifterLpower = pow;
         double rPos = vertLifterR.getCurrentPosition();
         double lPos = vertLifterL.getCurrentPosition();
-        double lifterAvgPos = (rPos+lPos)/2;
+        double lifterAvgPos = Math.max(Math.min((rPos+lPos)/2,PARAMS.lifterLimitHigh),PARAMS.lifterLimitLow);
 
         lifterRpower += (lifterAvgPos-rPos)*PARAMS.lifterCorCoef;
         lifterLpower += (lifterAvgPos-lPos)*PARAMS.lifterCorCoef;
 
-        if(PARAMS.lifterLimitHigh>lifterAvgPos && pow>0){
+
+        if(PARAMS.lifterLimitHigh>lifterAvgPos && pow>=0){
             vertLifterR.setPower(lifterRpower);
             vertLifterL.setPower(lifterLpower);
-        }else if(PARAMS.lifterLimitLow<lifterAvgPos && pow<0) {
+        }else if(PARAMS.lifterLimitLow<lifterAvgPos && pow<=0) {
             vertLifterR.setPower(lifterRpower);
             vertLifterL.setPower(lifterLpower);
         }else{

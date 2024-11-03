@@ -18,7 +18,7 @@ public final class DriveTest extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        Pose2d beginPose = new Pose2d(0, 0, 0);
+        Pose2d beginPose = new Pose2d(-40, -40, Math.PI/4);
         MecanumDrive drive = new MecanumDrive(hardwareMap, beginPose);
         Lifters lift = new Lifters(hardwareMap);
         drive.setTeamBlue();
@@ -27,9 +27,32 @@ public final class DriveTest extends LinearOpMode {
         Actions.runBlocking(
             new SequentialAction(
                 new ParallelAction(
-                    lift.setVertLifterPos(0,.5),
                     drive.actionBuilder(beginPose)
-                        .splineTo(new Vector2d(20, 20), Math.PI / 2)
+                            .setTangent(3*Math.PI/4)
+                            .splineToLinearHeading(new Pose2d(-55,0,0),Math.PI/2)
+                            .splineToLinearHeading(new Pose2d(-40,40,-Math.PI/4),Math.PI/4)
+
+                            .splineToLinearHeading(new Pose2d(0,55,-Math.PI/2),0)
+                            .splineToLinearHeading(new Pose2d(40,40,-3*Math.PI/4),-Math.PI/4)
+
+                            .splineToLinearHeading(new Pose2d(55,0,Math.PI),-Math.PI/2)
+                            .splineToLinearHeading(new Pose2d(40,-40,3*Math.PI/4),-3*Math.PI/4)
+
+                            .splineToLinearHeading(new Pose2d(0,-55,Math.PI/2),Math.PI)
+                            .splineToLinearHeading(new Pose2d(-40,-40,3*Math.PI/4),3*Math.PI/4)
+
+                            .setTangent(3*Math.PI/4)
+                            .splineTo(new Vector2d(-55,0), Math.PI/2)
+                            .splineTo(new Vector2d(-40,40),Math.PI/4)
+
+                            .splineTo(new Vector2d(0,55),0)
+                            .splineTo(new Vector2d(40,40),-Math.PI/4)
+
+                            .splineTo(new Vector2d(55,0),-Math.PI/2)
+                            .splineTo(new Vector2d(40,-40),-3*Math.PI/4)
+
+                            .splineTo(new Vector2d(0,-55),Math.PI)
+                            .splineTo(new Vector2d(-40,-40),3*Math.PI/4)
                         .build()
                 ),
                 new InstantAction(() -> lift.setVertLifterPower(0))
