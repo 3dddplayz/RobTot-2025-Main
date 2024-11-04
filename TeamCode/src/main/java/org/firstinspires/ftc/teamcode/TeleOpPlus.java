@@ -12,6 +12,7 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.teamcode.sections.Intake;
 import org.firstinspires.ftc.teamcode.sections.Lifters;
@@ -94,7 +95,8 @@ public class TeleOpPlus extends LinearOpMode {
                 drive.TeleOpMove(new PoseVelocity2d(new Vector2d(0, -1), 0));
             }
             else {
-                drive.TeleOpMove(new PoseVelocity2d(new Vector2d(-gamepad1.left_stick_y, -gamepad1.left_stick_x), -gamepad1.right_stick_x));
+                double brakeCoeff = 1-gamepad1.right_trigger;
+                drive.TeleOpMove(new PoseVelocity2d(new Vector2d(-gamepad1.left_stick_y*brakeCoeff, -gamepad1.left_stick_x*brakeCoeff), -gamepad1.right_stick_x*brakeCoeff));
             }
         }
         if(gamepad2.a){
@@ -104,6 +106,20 @@ public class TeleOpPlus extends LinearOpMode {
         }else intk.intakeOff();
         lift.setHorLifterPower(-gamepad2.right_stick_y);
         lift.setVertLifterPower(-gamepad2.right_trigger+gamepad2.left_trigger);
+        if(gamepad2.y) {
+            Actions.runBlocking(
+                    lift.setVertLifterPos(450, .5)
+            );
+        }
+        else if(gamepad2.x){
+                Actions.runBlocking(
+                        lift.setVertLifterPos(2500,.7)
+                );
+        }
+        else{
+            lift.vertLifterR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            lift.vertLifterL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        }
 
         dash.sendTelemetryPacket(packet);
     }
