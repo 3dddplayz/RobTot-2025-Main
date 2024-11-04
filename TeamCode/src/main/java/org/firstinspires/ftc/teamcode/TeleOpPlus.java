@@ -24,6 +24,7 @@ import java.util.*;
 public class TeleOpPlus extends LinearOpMode {
     private FtcDashboard dash = FtcDashboard.getInstance();
     private List<Action> runningActions = new ArrayList<>();
+    private List<Action> runningActionsLift = new ArrayList<>();
     boolean driverOveride = false;
     MecanumDrive drive;
     Lifters lift;
@@ -59,6 +60,17 @@ public class TeleOpPlus extends LinearOpMode {
             }
         }
         runningActions = newActions;
+
+        List<Action> newActions2 = new ArrayList<>();
+        for (Action action : runningActionsLift) {
+            action.preview(packet.fieldOverlay());
+            if (action.run(packet)) {
+                newActions.add(action);
+            }
+        }
+        runningActionsLift = newActions2;
+
+
 //        if (gamepad1.a) {
 //            driverOveride = true;
 //            runningActions.add( new SequentialAction(
@@ -99,26 +111,28 @@ public class TeleOpPlus extends LinearOpMode {
                 drive.TeleOpMove(new PoseVelocity2d(new Vector2d(-gamepad1.left_stick_y*brakeCoeff, -gamepad1.left_stick_x*brakeCoeff), -gamepad1.right_stick_x*brakeCoeff));
             }
         }
+
+        //gamepad 2
         if(gamepad2.a){
             intk.intakeIn();
         } else if(gamepad2.b) {
             intk.intakeOut();
         }else intk.intakeOff();
+
+        //lifter control code
         lift.setHorLifterPower(-gamepad2.right_stick_y);
         lift.setVertLifterPower(-gamepad2.right_trigger+gamepad2.left_trigger);
+
         if(gamepad2.y) {
-            Actions.runBlocking(
-                    lift.setVertLifterPos(450, .5)
-            );
+            runningActions.add(lift.setVertLifterPos(450, .5));
         }
         else if(gamepad2.x){
-                Actions.runBlocking(
-                        lift.setVertLifterPos(2500,.7)
-                );
+            runningActions.add(lift.setVertLifterPos(2500, .5));
         }
         else{
             lift.vertLifterR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             lift.vertLifterL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            lift.lifterOverideOff();
         }
 
         dash.sendTelemetryPacket(packet);

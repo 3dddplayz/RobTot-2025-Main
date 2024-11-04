@@ -23,7 +23,6 @@ public final class DriveTest extends LinearOpMode {
         Lifters lift = new Lifters(hardwareMap);
         drive.setTeamBlue();
         waitForStart();
-
         Actions.runBlocking(
             new SequentialAction(
                 new ParallelAction(

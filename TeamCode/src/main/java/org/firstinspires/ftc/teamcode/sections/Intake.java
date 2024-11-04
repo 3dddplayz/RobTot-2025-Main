@@ -2,6 +2,9 @@ package org.firstinspires.ftc.teamcode.sections;
 
 import android.drm.DrmStore;
 
+import androidx.annotation.NonNull;
+
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.SleepAction;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -33,27 +36,44 @@ public class Intake {
         intakeR.setPower(PARAMS.intakeSpeed);
         intakeL.setPower(PARAMS.intakeSpeed);
     }
-    public Action IntakeIn(){
-        intakeIn();
-        return new SleepAction(0);
-    }
 
     public void intakeOut(){
         intakeR.setPower(-PARAMS.intakeSpeed);
         intakeL.setPower(-PARAMS.intakeSpeed);
-    }
-    public Action IntakeOut(){
-        intakeOut();
-        return new SleepAction(0);
     }
 
     public void intakeOff(){
         intakeR.setPower(0);
         intakeL.setPower(0);
     }
+
+    //Auto Actions
+    public Action IntakeIn(){
+        return new Action(){
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                intakeIn();
+                return false;
+            }
+        };
+    }
+    public Action IntakeOut(){
+        return new Action(){
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                intakeOut();
+                return false;
+            }
+        };
+    }
     public Action IntakeOff(){
-        intakeOff();
-        return new SleepAction(0);
+        return new Action(){
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                intakeOff();
+                return false;
+            }
+        };
     }
 
 }

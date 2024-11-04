@@ -1,2 +1,9 @@
-1. TEST ODOMETRY
-2. implement splitting algorithm for image rec
+1. Test new extra correction to get rid of jerking after moving
+
+2. Create a lifter while action to run in parralel to keep the lifter at the same position that can be
+    a. Has to run parralel to auto code and teleop code
+    b. Has to turn off during the teleOp power function
+
+3. Test new Intake Actions
+
+3. implement splitting algorithm for image rec

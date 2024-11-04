@@ -17,6 +17,9 @@ public class Lifters {
     public DcMotor vertLifterR, vertLifterL;
     Servo  horLifterR, horLifterL;
     double horLiftPos = 0;
+    int targetPos = 0;
+    boolean lifterWhileOn = false;
+    boolean lifterOveride = false;
     public static class Params {
         public int lifterLimitHigh = 4350;
         public int lifterLimitLow = 0;
@@ -44,6 +47,44 @@ public class Lifters {
         horLifterL.setDirection(Servo.Direction.FORWARD);
     }
 
+    public class LifterWhile implements Action {
+        double rPos,lPos,lifterAvgPos;
+        int pos = targetPos;
+        double power = .8;
+
+        @Override
+        public boolean run(@NonNull TelemetryPacket packet) {
+            if(!lifterOveride) {
+                rPos = vertLifterR.getCurrentPosition();
+                lPos = vertLifterL.getCurrentPosition();
+                lifterAvgPos = (rPos + lPos) / 2;
+
+                vertLifterR.setPower(power + ((lifterAvgPos - rPos) * PARAMS.lifterCorCoef));
+                vertLifterL.setPower(power + ((lifterAvgPos - lPos) * PARAMS.lifterCorCoef));
+            }
+
+            return (Math.abs(pos-lifterAvgPos) > 15 || lifterWhileOn);
+        }
+    }
+    public Action lifterWhile(){
+        lifterWhileOn = true;
+        return new LifterWhile();
+    }
+
+    public Action lifterWhileOff(){
+        return new Action(){
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                lifterWhileOn = false;
+                return false;
+            }
+        };
+    }
+
+    public void lifterOverideOff(){
+        lifterOveride = false;
+    }
+
     public class SetVertLifterPos implements Action {
         double rPos,lPos,lifterAvgPos;
         int pos = 0;
@@ -60,9 +101,6 @@ public class Lifters {
 
 
             return Math.abs(pos-lifterAvgPos) > 15;
-            //2500
-            //415
-
         }
     }
     //stupid setup sh*t
@@ -98,7 +136,10 @@ public class Lifters {
             vertLifterR.setPower(lifterRpower-pow);
             vertLifterL.setPower(lifterLpower-pow);
         }
+        targetPos = (int)lifterAvgPos;
+        lifterOveride = true;
     }
+
 
     public void setHorLifterPower(double power){
         horLiftPos = (horLifterL.getPosition() + horLifterR.getPosition())/2;
