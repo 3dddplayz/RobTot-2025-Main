@@ -28,30 +28,17 @@ public final class DriveTest extends LinearOpMode {
                 new ParallelAction(
                     drive.actionBuilder(beginPose)
                             .setTangent(3*Math.PI/4)
-                            .splineToLinearHeading(new Pose2d(-55,0,0),Math.PI/2)
+                            .splineToLinearHeading(new Pose2d(-45,0,0),Math.PI/2)
                             .splineToLinearHeading(new Pose2d(-40,40,-Math.PI/4),Math.PI/4)
 
-                            .splineToLinearHeading(new Pose2d(0,55,-Math.PI/2),0)
+                            .splineToLinearHeading(new Pose2d(0,45,-Math.PI/2),0)
                             .splineToLinearHeading(new Pose2d(40,40,-3*Math.PI/4),-Math.PI/4)
 
-                            .splineToLinearHeading(new Pose2d(55,0,Math.PI),-Math.PI/2)
+                            .splineToLinearHeading(new Pose2d(45,0,Math.PI),-Math.PI/2)
                             .splineToLinearHeading(new Pose2d(40,-40,3*Math.PI/4),-3*Math.PI/4)
 
-                            .splineToLinearHeading(new Pose2d(0,-55,Math.PI/2),Math.PI)
-                            .splineToLinearHeading(new Pose2d(-40,-40,3*Math.PI/4),3*Math.PI/4)
-
-                            .setTangent(3*Math.PI/4)
-                            .splineTo(new Vector2d(-55,0), Math.PI/2)
-                            .splineTo(new Vector2d(-40,40),Math.PI/4)
-
-                            .splineTo(new Vector2d(0,55),0)
-                            .splineTo(new Vector2d(40,40),-Math.PI/4)
-
-                            .splineTo(new Vector2d(55,0),-Math.PI/2)
-                            .splineTo(new Vector2d(40,-40),-3*Math.PI/4)
-
-                            .splineTo(new Vector2d(0,-55),Math.PI)
-                            .splineTo(new Vector2d(-40,-40),3*Math.PI/4)
+                            .splineToLinearHeading(new Pose2d(0,-45,Math.PI/2),Math.PI)
+                            .splineToLinearHeading(new Pose2d(-40,-40,Math.PI/4),3*Math.PI/4)
                         .build()
                 ),
                 new InstantAction(() -> lift.setVertLifterPower(0))

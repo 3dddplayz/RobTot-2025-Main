@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.sections;
 // RR-specific imports
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
 
 import androidx.annotation.NonNull;
 
@@ -9,10 +8,9 @@ import com.acmerobotics.roadrunner.Action;
 
 // Non-RR imports
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
+
 public class Lifters {
     public DcMotor vertLifterR, vertLifterL;
     Servo  horLifterR, horLifterL;
@@ -66,12 +64,12 @@ public class Lifters {
             return (Math.abs(pos-lifterAvgPos) > 15 || lifterWhileOn);
         }
     }
-    public Action lifterWhile(){
+    public Action lifterHold(){
         lifterWhileOn = true;
         return new LifterWhile();
     }
 
-    public Action lifterWhileOff(){
+    public Action lifterHoldOff(){
         return new Action(){
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
@@ -99,8 +97,13 @@ public class Lifters {
             vertLifterR.setPower(power + ((lifterAvgPos - rPos) * PARAMS.lifterCorCoef));
             vertLifterL.setPower(power + ((lifterAvgPos - lPos) * PARAMS.lifterCorCoef));
 
-
-            return Math.abs(pos-lifterAvgPos) > 15;
+            if(Math.abs(pos-lifterAvgPos) > 15){
+                lifterOveride = true;
+                return true;
+            }else{
+                lifterOveride = false;
+                return false;
+            }
         }
     }
     //stupid setup sh*t

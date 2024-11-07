@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.acmerobotics.roadrunner.InstantAction;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
@@ -24,9 +23,18 @@ public final class BlueBucket extends LinearOpMode {
         drive.setTeamBlue();
         waitForStart();
         Actions.runBlocking(
+        new ParallelAction(lift.lifterHold(),
+            new SequentialAction(
                 drive.actionBuilder(beginPose)
-                        .strafeTo(new Vector2d(-60,57))
-                        .build()
+                    .strafeTo(new Vector2d(-60,57))
+                .build(),
+                lift.setVertLifterPos(1000,1),
+                drive.actionBuilder(beginPose)
+                    .strafeTo(new Vector2d(-60,57))
+                .build(),
+                lift.lifterHoldOff()
+            )
+        )
         );
     }
 

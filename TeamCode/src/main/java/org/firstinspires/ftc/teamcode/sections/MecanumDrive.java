@@ -99,26 +99,31 @@ public final class MecanumDrive {
         public double kA = 0.00010;
 
         // path profile parameters (in inches)
-        public double maxWheelVel = 50;
+        public double maxWheelVel = 40;
         public double minProfileAccel = -30;
-        public double maxProfileAccel = 50;
+        public double maxProfileAccel = 25;
 
         // turn profile parameters (in radians)
         public double maxAngVel = Math.PI; // shared with path
         public double maxAngAccel = Math.PI;
 
         // path controller gains
-        public double axialGain = 8;
-        public double lateralGain = 8;
-        public double headingGain = 8; // shared with turn
+        public double axialGain = 12;
+        public double lateralGain = 12;
+        public double headingGain = 12; // shared with turn
 
-        public double axialVelGain = 1;
-        public double lateralVelGain = 1;
-        public double headingVelGain = .5;
+        public double axialVelGain = .6;
+        public double lateralVelGain = .6;
+        public double headingVelGain = .6;
 
-        public int lifterLimitHigh = 8000;
-        public int lifterLimitLow = 0;
-        public double lifterCorCoef = .25;
+//        public double axialGain = 8;
+//        public double lateralGain = 8;
+//        public double headingGain = 8; // shared with turn
+//
+//        public double axialVelGain = 1;
+//        public double lateralVelGain = 1;
+//        public double headingVelGain = .5;
+
         public boolean displayColorsOnly = false;
     }
 
@@ -381,9 +386,9 @@ public final class MecanumDrive {
 
             Pose2d error = txWorldTarget.value().minusExp(pose);
 
-            if ((t >= timeTrajectory.duration && error.position.norm() < 2
-                    && robotVelRobot.linearVel.norm() < 0.5)
-                    || t >= timeTrajectory.duration + 1) {
+            //extra correction
+            if ((t >= timeTrajectory.duration && error.position.norm() < 2)
+                    || t >= timeTrajectory.duration + .25) {
                 leftFront.setPower(0);
                 leftBack.setPower(0);
                 rightBack.setPower(0);
