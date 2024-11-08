@@ -115,6 +115,7 @@ public class Lifters {
         vertLifterL.setTargetPosition(pos);
         vertLifterR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         vertLifterL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        targetPos = pos;
         return action;
     }
 

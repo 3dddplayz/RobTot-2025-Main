@@ -37,10 +37,12 @@ public class TeleOpPlus extends LinearOpMode {
 
         drive.setTeamRed();
         waitForStart();
+        runningActionsLift.add(lift.lifterHold());
         //drive.readPos();
         while(opModeIsActive()){
             looping();
         }
+        lift.lifterHoldOff();
     }
 
 
@@ -121,7 +123,12 @@ public class TeleOpPlus extends LinearOpMode {
 
         //lifter control code
         lift.setHorLifterPower(-gamepad2.right_stick_y);
-        lift.setVertLifterPower(-gamepad2.right_trigger+gamepad2.left_trigger);
+
+        if(Math.abs(-gamepad2.right_trigger+gamepad2.left_trigger)>0.01){
+            lift.setVertLifterPower(-gamepad2.right_trigger+gamepad2.left_trigger);
+        }else{
+            lift.lifterOverideOff();
+        }
 
         if(gamepad2.y) {
             runningActions.add(lift.setVertLifterPos(450, .5));
