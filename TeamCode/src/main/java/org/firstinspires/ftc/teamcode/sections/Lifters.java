@@ -48,7 +48,7 @@ public class Lifters {
     public class LifterWhile implements Action {
         double rPos,lPos,lifterAvgPos;
         int pos = targetPos;
-        double power = .8;
+        double power = .5;
 
         @Override
         public boolean run(@NonNull TelemetryPacket packet) {
@@ -64,6 +64,7 @@ public class Lifters {
             return (Math.abs(pos-lifterAvgPos) > 15 || lifterWhileOn);
         }
     }
+
     public Action lifterHold(){
         lifterWhileOn = true;
         return new LifterWhile();
@@ -73,7 +74,19 @@ public class Lifters {
         return new Action(){
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
-                lifterWhileOn = false;
+                double rPos = vertLifterR.getCurrentPosition();
+                double lPos = vertLifterL.getCurrentPosition();
+                double lifterAvgPos = (rPos + lPos) / 2;
+
+                return Math.abs(targetPos-lifterAvgPos) > 15;
+            }
+        };
+    }
+
+    public Action waitForLifter(){
+        return new Action(){
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
                 return false;
             }
         };

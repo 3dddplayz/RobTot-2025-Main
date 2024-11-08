@@ -37,8 +37,7 @@ public class TeleOpPlus extends LinearOpMode {
 
         drive.setTeamRed();
         waitForStart();
-        runningActionsLift.add(lift.lifterHold());
-        //drive.readPos();
+        drive.readPos();
         while(opModeIsActive()){
             looping();
         }
@@ -47,11 +46,10 @@ public class TeleOpPlus extends LinearOpMode {
 
 
     public void looping() {
-        drive.updatePoseEstimate();
         TelemetryPacket packet = new TelemetryPacket();
-        Pose2d pose = drive.pose;
+        lift.lifterHold().run(packet);
 
-        // updated based on gamepads
+        Pose2d pose = drive.pose;
 
         // update running actions
         List<Action> newActions = new ArrayList<>();
@@ -62,15 +60,6 @@ public class TeleOpPlus extends LinearOpMode {
             }
         }
         runningActions = newActions;
-
-        List<Action> newActions2 = new ArrayList<>();
-        for (Action action : runningActionsLift) {
-            action.preview(packet.fieldOverlay());
-            if (action.run(packet)) {
-                newActions.add(action);
-            }
-        }
-        runningActionsLift = newActions2;
 
 
 //        if (gamepad1.a) {
@@ -124,12 +113,6 @@ public class TeleOpPlus extends LinearOpMode {
         //lifter control code
         lift.setHorLifterPower(-gamepad2.right_stick_y);
 
-        if(Math.abs(-gamepad2.right_trigger+gamepad2.left_trigger)>0.01){
-            lift.setVertLifterPower(-gamepad2.right_trigger+gamepad2.left_trigger);
-        }else{
-            lift.lifterOverideOff();
-        }
-
         if(gamepad2.y) {
             runningActions.add(lift.setVertLifterPos(450, .5));
         }
@@ -137,9 +120,13 @@ public class TeleOpPlus extends LinearOpMode {
             runningActions.add(lift.setVertLifterPos(2500, .5));
         }
         else{
-            lift.vertLifterR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            lift.vertLifterL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            lift.lifterOverideOff();
+            if(Math.abs(-gamepad2.right_trigger+gamepad2.left_trigger)>0.01){
+                lift.vertLifterR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                lift.vertLifterL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                lift.setVertLifterPower(-gamepad2.right_trigger+gamepad2.left_trigger);
+            }else{
+                lift.lifterOverideOff();
+            }
         }
 
         dash.sendTelemetryPacket(packet);
