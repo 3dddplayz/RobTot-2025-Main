@@ -48,7 +48,7 @@ public class Lifters {
     public class LifterWhile implements Action {
         double rPos,lPos,lifterAvgPos;
         int pos = targetPos;
-        double power = .5;
+        double power = .1;
 
         @Override
         public boolean run(@NonNull TelemetryPacket packet) {
@@ -56,6 +56,10 @@ public class Lifters {
                 rPos = vertLifterR.getCurrentPosition();
                 lPos = vertLifterL.getCurrentPosition();
                 lifterAvgPos = (rPos + lPos) / 2;
+                vertLifterR.setTargetPosition(pos);
+                vertLifterL.setTargetPosition(pos);
+                vertLifterR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                vertLifterL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
                 vertLifterR.setPower(power + ((lifterAvgPos - rPos) * PARAMS.lifterCorCoef));
                 vertLifterL.setPower(power + ((lifterAvgPos - lPos) * PARAMS.lifterCorCoef));
@@ -120,16 +124,36 @@ public class Lifters {
         }
     }
     //stupid setup sh*t
-    public Action setVertLifterPos(int pos, double power) {
-        SetVertLifterPos action = new SetVertLifterPos();
-        action.pos = Math.min(Math.max(pos, PARAMS.lifterLimitLow), PARAMS.lifterLimitHigh);
-        action.power = power;
-        vertLifterR.setTargetPosition(pos);
-        vertLifterL.setTargetPosition(pos);
-        vertLifterR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        vertLifterL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        targetPos = pos;
-        return action;
+    public Action setVertLifterPos(int posPer, double powerPer) {
+
+        return new Action(){
+            double rPos,lPos,lifterAvgPos;
+            int pos = posPer;
+            double power = powerPer;
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                vertLifterR.setTargetPosition(posPer);
+                vertLifterL.setTargetPosition(posPer);
+                vertLifterR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                vertLifterL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                
+                rPos = vertLifterR.getCurrentPosition();
+                lPos = vertLifterL.getCurrentPosition();
+                lifterAvgPos = (rPos + lPos) / 2;
+
+                vertLifterR.setPower(power + ((lifterAvgPos - rPos) * PARAMS.lifterCorCoef));
+                vertLifterL.setPower(power + ((lifterAvgPos - lPos) * PARAMS.lifterCorCoef));
+
+                if(Math.abs(pos-lifterAvgPos) > 15){
+                    lifterOveride = true;
+                    return true;
+                }else{
+                    lifterOveride = false;
+                    return false;
+                }
+            }
+        };
     }
 
     public void setVertLifterPower(double pow){

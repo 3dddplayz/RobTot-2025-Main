@@ -1,7 +1,9 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.SleepAction;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -21,10 +23,14 @@ public final class LifterTest extends LinearOpMode {
         drive.setTeamBlue();
         waitForStart();
         Actions.runBlocking(
+            //new ParallelAction(lift.lifterHold(),
                 new SequentialAction(
-                        lift.setVertLifterPos(500,.5),
-                        lift.setVertLifterPos(0,.5)
+                    lift.setVertLifterPos(1000,.5),
+                    new SleepAction(2),
+                    lift.setVertLifterPos(500,.5)
+                    //lift.setVertLifterPos(10,.5)
                 )
+            //)
         );
     }
 
