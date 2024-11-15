@@ -111,7 +111,7 @@ public class TeleOpPlus extends LinearOpMode {
         }else intk.intakeOff();
 
         //lifter control code
-        lift.setHorLifterPower(-gamepad2.right_stick_y);
+        lift.horLifterL.setPosition(gamepad2.left_stick_y);
 
         if(gamepad2.y) {
             runningActions.add(lift.setVertLifterPos(450, .5));

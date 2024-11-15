@@ -13,7 +13,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 public class Lifters {
     public DcMotor vertLifterR, vertLifterL;
-    Servo  horLifterR, horLifterL;
+    public Servo  horLifterR, horLifterL;
     double horLiftPos = 0;
     int targetPos = 0;
     boolean lifterWhileOn = false;

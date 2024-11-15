@@ -124,7 +124,10 @@ public final class MecanumDrive {
 //        public double lateralVelGain = 1;
 //        public double headingVelGain = .5;
 
-        public boolean displayColorsOnly = false;
+        public boolean displayColorsOnly = true;
+
+        public int objTargetX = 150;
+        public int objTargetY = 110;
     }
 
     public static Params PARAMS = new Params();
@@ -606,72 +609,64 @@ public final class MecanumDrive {
     public Action autoGrabLoop(){
         MecanumDrive drive = this;
         return new Action() {
-            double x,y,rotation,cam2inch;
+            double x,y,rotation,targetYaw;
             ElapsedTime time = new ElapsedTime();
             @Override
             public boolean run (@NonNull TelemetryPacket packet){
-                if(time.time()<1){
+                x = getObjX();
+                y = getObjY();
+                if(time.time()<5&&(x==-1 && y==-1)){
                     x = getObjX();
                     y = getObjY();
                     rotation = getObjRot();
+                    targetYaw = pose.heading.toDouble();
                     return true;
-                }else if((160-x)/160>.05&&(120-y)/120>.05){
-                    double xChange = Math.min(Math.max(.005*(160-x),-.5),.5);
-                    double yChange = Math.min(Math.max(.005*(120-y),-.5),.5);
-                    PoseVelocity2d vel = new PoseVelocity2d(new Vector2d(yChange,xChange),0);
+
+                }else if((x==-1 && y==-1)){
+                    //if no obj detected
+                    return false;
+                }else if((PARAMS.objTargetX-x)/PARAMS.objTargetX>.05||(PARAMS.objTargetY-y)/PARAMS.objTargetY>.05){
+                    x = getObjX();
+                    y = getObjY();
+                    double xChange = Math.min(Math.max(.05*(PARAMS.objTargetX-x),-.5),.5);
+                    double yChange = Math.min(Math.max(.05*(PARAMS.objTargetY-y),-.5),.5);
+                    double headingChange = angleCor(1*(targetYaw - pose.heading.toDouble()));
+                    PoseVelocity2d vel = new PoseVelocity2d(new Vector2d(yChange,xChange),headingChange);
                     drive.setDrivePowers(vel);
+                    packet.put("obj x", x);
+                    packet.put("obj y", y);
                     return true;
                 }
                 return false;
             }
         };
     }
-    ElapsedTime time2 = new ElapsedTime();
-    public void autoGrabTest(){
-        time2.reset();
-        double x = 0;
-        double y = 0;
-        double rotation = 0;
-        double cam2inch = 1;
-        while(time2.time()<1){
-            x = getObjX();
-            y = getObjY();
-            rotation = getObjRot();
-        }
-        if(x!=-1 && y!=-1) {
-            cam2inch = 1.5 / Math.min(pipeline.target.size.height, pipeline.target.size.width);
-            //set line below once servo is configured
-            //servo.setPostion((rotation+90)/180);
-            Pose2d beginPose = new Pose2d(pose.position.x, pose.position.y, pose.heading.toDouble());
-            com.acmerobotics.roadrunner.ftc.Actions.runBlocking(
-                    this.actionBuilder(beginPose)
-                            .strafeTo(new Vector2d(pose.position.x, (155 - x) * cam2inch), new TranslationalVelConstraint(5.0))
-                            //.strafeToConstantHeading(new Vector2d(0, 0), new TranslationalVelConstraint(5.0))
-                            .build());
-        }else{
-            telemetry.addData("No Target", "Found");
-        }
-    }
+
     public Action autoGrab(){
+        ElapsedTime time2 = new ElapsedTime();
         time2.reset();
-        double x = 0;
-        double y = 0;
+        //obj center of robot choords
+        double centerX = 150;
+        double centerY = 110;
+
+        double x = -1;
+        double y = -1;
         double rotation = 0;
         double cam2inch = 1;
-        while(time2.time()<1){
+        while(time2.time()<5&&(x==-1 && y==-1)){
             x = getObjX();
             y = getObjY();
             rotation = getObjRot();
         }
         if(x!=-1 && y!=-1) {
             cam2inch = 1.5 / Math.min(pipeline.target.size.height, pipeline.target.size.width);
-            Pose2d beginPose = new Pose2d(pose.position.x, pose.position.y, pose.heading.toDouble());
-            return this.actionBuilder(beginPose)
-                .strafeTo(new Vector2d(pose.position.x, (155 - x) * cam2inch), new TranslationalVelConstraint(5.0))
+            Pose2d beginPose = new Pose2d(pose.position.x, pose.position.y, 0);
+            return actionBuilder(beginPose)
+                .strafeToConstantHeading(new Vector2d(pose.position.x+(centerY - y) * cam2inch, pose.position.y+(centerX - x) * cam2inch), new TranslationalVelConstraint(5.0))
                 //.strafeToConstantHeading(new Vector2d(0, 0), new TranslationalVelConstraint(5.0))
                 .build();
         }else{
-            return new SleepAction(1);
+            return new SleepAction(0);
         }
     }
 
@@ -742,20 +737,23 @@ public final class MecanumDrive {
             }else{
                 output = input;
             }
+
 //      Insert Code for Rectangle detections here
-            output = addRect(output, selectedColorMask, hierarchy);
+            List<RotatedRect> rectList = new ArrayList<>();
+            rectList = getRect(selectedColorMask, hierarchy,rectList);
             if(trackYellow){
-                output = addRect(output, yellowMask, hierarchy);
+                rectList = getRect(selectedColorMask, hierarchy,rectList);
+                output = addRect(output, rectList);
             }else {
-                Core.bitwise_and(input, input, objOnly, selectedColorMask);
+                output = addRect(output, rectList);
             }
+            target = getClosest(rectList);
             return output;
         }
-        private Mat addRect(Mat input,Mat mask,Mat hierarchy){
+        private List<RotatedRect> getRect(Mat mask, Mat hierarchy, List<RotatedRect> minRect){
             List<MatOfPoint> contours = new ArrayList<>();
             Imgproc.findContours(mask, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
 
-            List<RotatedRect> minRect = new ArrayList<>();
             for (MatOfPoint contour : contours) {
                 if (Imgproc.contourArea(contour) > 100) { // Adjust this threshold as needed
                     RotatedRect rect = Imgproc.minAreaRect(new MatOfPoint2f(contour.toArray()));
@@ -766,18 +764,16 @@ public final class MecanumDrive {
 
                 }
             }
+            return minRect;
+        }
+
+        private Mat addRect(Mat input, List<RotatedRect> minRect){
             // Draw rectangles and get data
             for (int i = 0; i < minRect.size(); i++) {
                 Point[] rectPoints = new Point[4];
                 minRect.get(i).points(rectPoints);
                 for (int j = 0; j < 4; j++) {
                     Imgproc.line(input, rectPoints[j], rectPoints[(j+1) % 4], new Scalar(0, 255, 0), 4);
-                }
-
-                // Get rotation, x, and y for the first rectangle (if any)
-                if (i == 0) {
-                    target = getClosest(minRect);
-                    // You can use these values as needed
                 }
             }
             return input;
@@ -847,6 +843,7 @@ public final class MecanumDrive {
             }
         }
     }
+
     public double getObjX(){
         return pipeline.getX();
     }
@@ -873,5 +870,11 @@ public final class MecanumDrive {
     }
     public void yellowTrackingOff(){
         pipeline.trackYellow = false;
+    }
+
+    //Math Util
+    public Vector2d rotateChoords(Vector2d vect, double yaw){
+        double x = Math.cos(vect.x);
+        return vect;
     }
 }

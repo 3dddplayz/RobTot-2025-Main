@@ -20,10 +20,15 @@ public final class AutoGrabTest extends LinearOpMode {
         Pose2d beginPose = new Pose2d(-24, 60, -Math.PI/2);
         MecanumDrive drive = new MecanumDrive(hardwareMap, beginPose);
         Lifters lift = new Lifters(hardwareMap);
-        drive.setTeamBlue();
+        drive.setTeamRed();
         waitForStart();
         Actions.runBlocking(
-                drive.autoGrab()
+                new SequentialAction(
+                    drive.actionBuilder(beginPose)
+                        .strafeTo(new Vector2d(4,0))
+                    .build(),
+                    drive.autoGrab()
+                        )
         );
     }
 
