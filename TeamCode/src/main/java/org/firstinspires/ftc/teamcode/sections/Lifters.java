@@ -23,6 +23,10 @@ public class Lifters {
         public int lifterLimitLow = 0;
         public double lifterCorCoef = .0008;
         public double horPowerCoeff = .0025;
+
+        public double horLifterArmMaxDegree = 95;
+        public double horServoMaxTurn = 300/2;
+        //divide by two because of the 1:2 gear ratio on the extendo arm
     }
     Params PARAMS = new Params();
     public Lifters(HardwareMap hardwareMap) {
@@ -184,24 +188,28 @@ public class Lifters {
 
     public void setHorLifterPower(double power){
         horLiftPos = (horLifterL.getPosition() + horLifterR.getPosition())/2;
-        horLifterR.setPosition(horLiftPos+power*PARAMS.horPowerCoeff);
-        horLifterL.setPosition(horLiftPos+power*PARAMS.horPowerCoeff);
+        setHorLifterPos(horLiftPos * PARAMS.horPowerCoeff * PARAMS.horServoMaxTurn);
+        //convert average lift pos to degrees then multiply by coeff
     }
 
-    public class SetHorLifterPos implements Action {
-        int pos = 0;
-        @Override
-        public boolean run(@NonNull TelemetryPacket packet) {
-            horLifterR.setPosition(pos);
-            horLifterL.setPosition(pos);
-            return false;
-        }
-    }
     //stupid setup sh*t
-    public Action setHorLiftPos(int pos) {
-        SetHorLifterPos action = new SetHorLifterPos();
-        action.pos = Math.min(Math.max(pos, 0), 1);
-        return action;
+    public void setHorLifterPos(double degree){
+        double pos = Math.max(Math.min(degree,PARAMS.horLifterArmMaxDegree),0); //sets a limit to what you can set the servo position to go to
+
+        pos/=PARAMS.horServoMaxTurn; //converts from degrees(0-360) to servo position(0-1)
+
+        horLifterR.setPosition(pos);
+        horLifterL.setPosition(pos);
+    }
+    public Action SetHorLiftPos(double degree) {
+        return new Action(){
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                setHorLifterPos(degree);
+                return false;
+            }
+        };
+
     }
 
 }

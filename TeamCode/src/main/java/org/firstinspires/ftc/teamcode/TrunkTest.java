@@ -1,37 +1,33 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.SleepAction;
-import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
+import org.firstinspires.ftc.teamcode.sections.Intake;
 import org.firstinspires.ftc.teamcode.sections.Lifters;
 import org.firstinspires.ftc.teamcode.sections.MecanumDrive;
 
 
-@Autonomous(name = "Lifter Test", group = "Auto Testing")
-public final class LifterTest extends LinearOpMode {
+@Autonomous(name = "Trunk Test", group = "Auto Testing")
+public final class TrunkTest extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         Pose2d beginPose = new Pose2d(60, 60, Math.PI/4);
         MecanumDrive drive = new MecanumDrive(hardwareMap, beginPose);
         Lifters lift = new Lifters(hardwareMap);
+        Intake intk = new Intake(hardwareMap);
         drive.setTeamBlue();
         waitForStart();
-        Actions.runBlocking(
-            //new ParallelAction(lift.lifterHold(),
-                new SequentialAction(
-                    lift.setVertLifterPos(1000,.5),
-                    new SleepAction(2),
-                    lift.setVertLifterPos(500,.5)
-                    //lift.setVertLifterPos(10,.5)
-                )
-            //)
-        );
+        intk.setTrunkPos(0);
+        while(!gamepad1.a&&opModeIsActive()){
+        }
+        while(opModeIsActive()){
+            intk.setTrunkPos(90);
+        }
     }
 
 }

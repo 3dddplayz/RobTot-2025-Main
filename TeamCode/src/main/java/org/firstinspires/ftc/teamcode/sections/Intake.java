@@ -15,10 +15,15 @@ import com.qualcomm.robotcore.hardware.Servo;
 public class Intake {
     public static class Params {
         double intakeSpeed = 1;
+        public double trunkMaxDegree = 200;
+        public double trunkServoMaxTurn = 360*5;
+        public double trunkPowerCoeff = .0025;
+
     }
+    double trunkPos = 0;
     Params PARAMS = new Params();
     CRServo intakeR, intakeL;
-    Servo trunkR, trunkL, twist;
+    public Servo trunkR, trunkL, twist;
     public Intake(HardwareMap hardwareMap){
         intakeR = hardwareMap.get(CRServo.class,"intakeR");
         intakeL = hardwareMap.get(CRServo.class,"intakeL");
@@ -71,6 +76,30 @@ public class Intake {
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
                 intakeOff();
+                return false;
+            }
+        };
+    }
+
+    public void setTrunkPos(double degree){
+        double pos = Math.max(Math.min(degree,PARAMS.trunkMaxDegree),0); //sets a limit to what you can set the servo position to go to
+
+        pos/=PARAMS.trunkServoMaxTurn; //converts from degrees(0-360) to servo position(0-1)
+
+        trunkR.setPosition(pos);
+        trunkL.setPosition(pos);
+    }
+
+    public void setTrunkPower(double pow){
+        trunkPos = (trunkR.getPosition() + trunkL.getPosition())/2;
+        setTrunkPos(trunkPos * PARAMS.trunkPowerCoeff * PARAMS.trunkServoMaxTurn);
+    }
+
+    public Action SetTrunkPos(double degree){
+        return new Action(){
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                setTrunkPos(degree);
                 return false;
             }
         };
