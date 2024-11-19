@@ -24,9 +24,12 @@ public final class TrunkTest extends LinearOpMode {
         waitForStart();
         intk.setTrunkPos(0);
         while(!gamepad1.a&&opModeIsActive()){
+            if(gamepad1.a){
+                break;
+            }
         }
         while(opModeIsActive()){
-            intk.setTrunkPos(90);
+            intk.setTrunkPos(360);
         }
     }
 

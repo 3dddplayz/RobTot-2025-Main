@@ -15,7 +15,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 public class Intake {
     public static class Params {
         double intakeSpeed = 1;
-        public double trunkMaxDegree = 200;
+        public double trunkMaxDegree = 720;//200
         public double trunkServoMaxTurn = 360*5;
         public double trunkPowerCoeff = .0025;
 
