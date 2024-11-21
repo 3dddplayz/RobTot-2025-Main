@@ -642,6 +642,53 @@ public final class MecanumDrive {
         };
     }
 
+    public Action waitForX(double x) {
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                return (Math.abs(pose.position.x-x)>=Math.abs(.1*pose.position.x));
+            }
+        };
+    }
+
+    public Action waitForY(double y) {
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                return (Math.abs(pose.position.y-y)>=Math.abs(.1*pose.position.y));
+            }
+        };
+    }
+
+    public Action waitForHeading(double yaw) {
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                return (Math.abs(pose.heading.toDouble()-yaw)>=Math.abs(.1*pose.heading.toDouble()));
+            }
+        };
+    }
+
+    public Action waitForVector(double x, double y) {
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                return (Math.abs(pose.position.y-y)>=Math.abs(.1*pose.position.y)&&Math.abs(pose.position.x-x)>=Math.abs(.1*pose.position.x));
+            }
+        };
+    }
+
+    public Action waitForPose(double x, double y, double yaw) {
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                return (Math.abs(pose.position.y-y)>=Math.abs(.1*pose.position.y)&&Math.abs(pose.position.x-x)>=Math.abs(.1*pose.position.x)&&Math.abs(pose.heading.toDouble()-yaw)>=Math.abs(.1*pose.heading.toDouble()));
+            }
+        };
+    }
+
+
+
     public Action autoGrab(){
         ElapsedTime time2 = new ElapsedTime();
         time2.reset();
@@ -669,6 +716,7 @@ public final class MecanumDrive {
             return new SleepAction(0);
         }
     }
+
 
 
     class CameraDetectPipeline extends OpenCvPipeline
@@ -877,4 +925,5 @@ public final class MecanumDrive {
         double x = Math.cos(vect.x);
         return vect;
     }
+
 }
