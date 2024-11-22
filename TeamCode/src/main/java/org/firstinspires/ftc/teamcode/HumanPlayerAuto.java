@@ -3,11 +3,14 @@ package org.firstinspires.ftc.teamcode;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.SleepAction;
+import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
+import org.firstinspires.ftc.teamcode.sections.Intake;
 import org.firstinspires.ftc.teamcode.sections.Lifters;
 import org.firstinspires.ftc.teamcode.sections.MecanumDrive;
 
@@ -19,54 +22,72 @@ public final class HumanPlayerAuto extends LinearOpMode {
         Pose2d beginPose = new Pose2d(24, -60, Math.PI/2);
         MecanumDrive drive = new MecanumDrive(hardwareMap, beginPose);
         Lifters lift = new Lifters(hardwareMap);
+        Intake intk = new Intake(hardwareMap);
         drive.setTeamBlue();
         waitForStart();
         Actions.runBlocking(
             new SequentialAction(
-                drive.actionBuilder(beginPose)
-                        .strafeTo(new Vector2d(8,-24-12))
-                        .strafeTo(new Vector2d(8,-24-10))
+                    intk.SetTrunkPos(90),
+                    intk.SetTwistPos(90),
+                    new ParallelAction(
+                        drive.actionBuilder(beginPose)
+                            .setTangent(3*Math.PI/4)
+                            .splineToConstantHeading(new Vector2d(6,-24-12),3*Math.PI/4,new TranslationalVelConstraint(25))
+                            .splineToConstantHeading(new Vector2d(3,-24-10),Math.PI)
+                                .build()
 
+                    ,new SequentialAction(
+                        lift.setVertLifterPos(2520,1)
 
-                        //push 1 red to HP area
-//                        .strafeTo(new Vector2d(8,-24-15))
-//                        .strafeTo(new Vector2d(32,-24-15))
-//                        .strafeTo(new Vector2d(32,-24-15))
-//                        .setTangent(new Rotation2d(0,1))
-//                        .splineToLinearHeading(new Pose2d(40,-8,3*Math.PI/2),Math.PI/2)
-//
-//                        .strafeToLinearHeading(new Vector2d(47,-8),-Math.PI/2)
-//                        .strafeTo(new Vector2d(47,-24*3+11))
-//                        .strafeToLinearHeading(new Vector2d(8,-24-10),Math.PI/2)
-//                        .strafeTo(new Vector2d(8,-24-8))
+                    )
 
-                        //regrab 1
+                ),
+                    lift.setVertLifterPos(1600,.7),
+                    new ParallelAction(
+                            drive.actionBuilder(new Pose2d(8,-24-10,Math.PI/2))
+                                    .setTangent(0)
+                                    .splineToSplineHeading(new Pose2d(43,-24*3+17,3*Math.PI/2),0)
+                                    .splineToConstantHeading(new Vector2d(47,-24*3+13),-Math.PI/2)
 
-                        .setTangent(-Math.PI/3)
-                        .splineToLinearHeading(new Pose2d(47,-24*3+15,-Math.PI/2),-Math.PI/4)
-                        .strafeTo(new Vector2d(47,-24*3+11))
+                                    //regrab 2
+                                    .strafeToConstantHeading(new Vector2d(47,-24*3+15))
+                                    .setTangent(4.5*Math.PI/6)
+                                    .splineToSplineHeading(new Pose2d(8.5,-24-12,-3*Math.PI/2),Math.PI/2)
+                                    .splineToConstantHeading(new Vector2d(5.5,-24-10),Math.PI)
+                                    .build(),
+                            new SequentialAction(
+                                    lift.setVertLifterPos(700,.7),
+                                    intk.IntakeIn(),
+                                    new SleepAction(2),
+                                    drive.waitForX(40),
+                                    lift.setVertLifterPos(2520,.7),
+                                    intk.IntakeOff()
+                            )
+                    ),
+                    lift.setVertLifterPos(1600,.7),
+                    new ParallelAction(
+                            drive.actionBuilder(new Pose2d(8,-24-10,Math.PI/2))
+                                    .setTangent(0)
+                                    .splineToSplineHeading(new Pose2d(43,-24*3+17,3*Math.PI/2),0)
+                                    .splineToConstantHeading(new Vector2d(47,-24*3+13),-Math.PI/2)
 
-                        //regrab 2
-                        .strafeToLinearHeading(new Vector2d(8,-24-10),Math.PI/2)
-                        .strafeTo(new Vector2d(8,-24-8))
-                        .setTangent(-Math.PI/3)
-                        .splineToLinearHeading(new Pose2d(47,-24*3+15,-Math.PI/2),-Math.PI/4)
-                        .strafeTo(new Vector2d(47,-24*3+11))
+                                    //regrab 2
+                                    .strafeToConstantHeading(new Vector2d(47,-24*3+15))
+                                    .setTangent(4.5*Math.PI/6)
+                                    .splineToSplineHeading(new Pose2d(13,-24-12,-3*Math.PI/2),Math.PI/2)
+                                    .splineToConstantHeading(new Vector2d(10,-24-10),Math.PI)
+                                    .build(),
+                            new SequentialAction(
+                                    lift.setVertLifterPos(700,.7),
+                                    intk.IntakeIn(),
+                                    new SleepAction(2),
+                                    drive.waitForX(40),
+                                    lift.setVertLifterPos(2520,.7),
+                                    intk.IntakeOff()
+                            )
+                    ),
+                    lift.setVertLifterPos(0,.7)
 
-                        //regrab 3
-                        .strafeToLinearHeading(new Vector2d(8,-24-10),Math.PI/2)
-                        .strafeTo(new Vector2d(8,-24-8))
-                        .setTangent(-Math.PI/3)
-                        .splineToLinearHeading(new Pose2d(47,-24*3+15,-Math.PI/2),-Math.PI/4)
-                        .strafeTo(new Vector2d(47,-24*3+11))
-
-                        //regrab 4
-                        .strafeToLinearHeading(new Vector2d(8,-24-10),Math.PI/2)
-                        .strafeTo(new Vector2d(8,-24-8))
-                        .setTangent(-Math.PI/3)
-                        .splineToLinearHeading(new Pose2d(47,-24*3+15,-Math.PI/2),-Math.PI/4)
-                        .strafeTo(new Vector2d(47,-24*3+11))
-                        .build()
             )
         );
     }

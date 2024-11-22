@@ -22,7 +22,7 @@ public class Lifters {
         public int lifterLimitHigh = 4350;
         public int lifterLimitLow = 0;
         public double lifterCorCoef = .0008;
-        public double horPowerCoeff = .0025;
+        public double horPowerCoeff = 2;
 
         public double horLifterArmMaxDegree = 95;
         public double horServoMaxTurn = 300/2;
@@ -186,9 +186,9 @@ public class Lifters {
     }
 
 
-    public void setHorLifterPower(double power){
-        horLiftPos = (horLifterL.getPosition() + horLifterR.getPosition())/2;
-        setHorLifterPos(horLiftPos * PARAMS.horPowerCoeff * PARAMS.horServoMaxTurn);
+    public void setHorLifterPower(double pow){
+        horLiftPos = PARAMS.horServoMaxTurn*(horLifterL.getPosition());
+        setHorLifterPos(horLiftPos+pow*PARAMS.horPowerCoeff);
         //convert average lift pos to degrees then multiply by coeff
     }
 
@@ -201,7 +201,7 @@ public class Lifters {
         horLifterR.setPosition(pos);
         horLifterL.setPosition(pos);
     }
-    public Action SetHorLiftPos(double degree) {
+    public Action SetHorLifterPos(double degree) {
         return new Action(){
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {

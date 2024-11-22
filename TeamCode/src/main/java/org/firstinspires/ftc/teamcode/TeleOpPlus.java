@@ -37,7 +37,8 @@ public class TeleOpPlus extends LinearOpMode {
 
         drive.setTeamRed();
         waitForStart();
-        drive.readPos();
+        intk.setTrunkPos(190);
+//        drive.readPos();
         while(opModeIsActive()){
             looping();
         }
@@ -86,6 +87,8 @@ public class TeleOpPlus extends LinearOpMode {
         telemetry.addData("Obj Rot: ", drive.getObjRot());
         telemetry.addData("Lifter R: ", lift.vertLifterR.getCurrentPosition());
         telemetry.addData("Lifter L: ", lift.vertLifterL.getCurrentPosition());
+        telemetry.addData("Twist Pos: ", intk.twist.getPosition());
+        telemetry.addData("Trunk Pos: ", intk.trunkR.getPosition());
         telemetry.update();
         if(!driverOveride) {
             if (gamepad1.dpad_up) {
@@ -111,7 +114,6 @@ public class TeleOpPlus extends LinearOpMode {
         }else intk.intakeOff();
 
         //lifter control code
-        lift.horLifterL.setPosition(gamepad2.left_stick_y);
 
         if(gamepad2.y) {
             runningActions.add(lift.setVertLifterPos(450, .5));
@@ -129,7 +131,16 @@ public class TeleOpPlus extends LinearOpMode {
             }
         }
 
-        dash.sendTelemetryPacket(packet);
+        intk.setTwistPower(gamepad2.left_stick_x);
+        if(gamepad2.dpad_up){
+            intk.setTrunkPower(1);
+        } else if(gamepad2.dpad_down){
+            intk.setTrunkPower(-1);
+        }
+        //else{
+            //intk.setTrunkPower(0);
+        //}
+        lift.setHorLifterPower(-gamepad2.right_stick_y);
     }
     public void imageRecMove(){
             double x = drive.getObjX();

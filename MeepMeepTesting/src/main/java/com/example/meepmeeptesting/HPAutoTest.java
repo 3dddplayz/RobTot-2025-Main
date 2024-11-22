@@ -27,8 +27,8 @@ public class HPAutoTest {
                 myBot.getDrive().actionBuilder(new Pose2d(24, -60, Math.PI/2))
                         //first place
                         .setTangent(3*Math.PI/4)
-                        .splineToConstantHeading(new Vector2d(11,-24-10-12),3*Math.PI/4)
-                        .splineToConstantHeading(new Vector2d(8,-24-8-12),Math.PI)
+                        .splineToConstantHeading(new Vector2d(11,-24-10),3*Math.PI/4)
+                        .splineToConstantHeading(new Vector2d(8,-24-8),Math.PI)
 
 
                         //push 1 red to HP area
@@ -37,35 +37,27 @@ public class HPAutoTest {
                         //regrab 1
 
                         .setTangent(0)
-                        .splineToSplineHeading(new Pose2d(43,-24*3+15+12,3*Math.PI/2),0)
-                        .splineToConstantHeading(new Vector2d(47,-24*3+11+12),-Math.PI/2)
+                        .splineToSplineHeading(new Pose2d(43,-24*3+15,3*Math.PI/2),0)
+                        .splineToConstantHeading(new Vector2d(47,-24*3+11),-Math.PI/2)
 
                         //regrab 2
                         .setTangent(Math.PI)
-                        .splineToSplineHeading(new Pose2d(11,-24-10-12,-3*Math.PI/2),Math.PI)
-                        .splineToConstantHeading(new Vector2d(8,-24-8-12),Math.PI)
+                        .splineToSplineHeading(new Pose2d(11,-24-10,-3*Math.PI/2),Math.PI)
+                        .splineToConstantHeading(new Vector2d(8,-24-8),Math.PI)
                         //place
                         .setTangent(0)
-                        .splineToSplineHeading(new Pose2d(43,-24*3+15+12,3*Math.PI/2),0)
-                        .splineToConstantHeading(new Vector2d(47,-24*3+11+12),-Math.PI/2)
+                        .splineToSplineHeading(new Pose2d(43,-24*3+15,3*Math.PI/2),0)
+                        .splineToConstantHeading(new Vector2d(47,-24*3+11),-Math.PI/2)
 
                         //regrab 3
                         .setTangent(Math.PI)
-                        .splineToSplineHeading(new Pose2d(11,-24-10-12,-3*Math.PI/2),Math.PI)
-                        .splineToConstantHeading(new Vector2d(8,-24-8-12),Math.PI)
+                        .splineToSplineHeading(new Pose2d(11,-24-10,-3*Math.PI/2),Math.PI)
+                        .splineToConstantHeading(new Vector2d(8,-24-8),Math.PI)
                         //place
                         .setTangent(0)
-                        .splineToSplineHeading(new Pose2d(43,-24*3+15+12,3*Math.PI/2),0)
-                        .splineToConstantHeading(new Vector2d(47,-24*3+11+12),-Math.PI/2)
+                        .splineToSplineHeading(new Pose2d(43,-24*3+15,3*Math.PI/2),0)
+                        .splineToConstantHeading(new Vector2d(47,-24*3+11),-Math.PI/2)
 
-                        //regrab 4
-                        .setTangent(Math.PI)
-                        .splineToSplineHeading(new Pose2d(11,-24-10-12,-3*Math.PI/2),Math.PI)
-                        .splineToConstantHeading(new Vector2d(8,-24-8-12),Math.PI)
-                        //place
-                        .setTangent(0)
-                        .splineToSplineHeading(new Pose2d(43,-24*3+15+12,3*Math.PI/2),0)
-                        .splineToConstantHeading(new Vector2d(47,-24*3+11+12),-Math.PI/2)
 
 //
 

@@ -101,7 +101,7 @@ public final class MecanumDrive {
         // path profile parameters (in inches)
         public double maxWheelVel = 40;
         public double minProfileAccel = -30;
-        public double maxProfileAccel = 25;
+        public double maxProfileAccel = 40;
 
         // turn profile parameters (in radians)
         public double maxAngVel = Math.PI; // shared with path
@@ -646,7 +646,7 @@ public final class MecanumDrive {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
-                return (Math.abs(pose.position.x-x)>=Math.abs(.1*pose.position.x));
+                return (Math.abs(pose.position.x-x)>=Math.abs(.03*pose.position.x));
             }
         };
     }
@@ -655,7 +655,7 @@ public final class MecanumDrive {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
-                return (Math.abs(pose.position.y-y)>=Math.abs(.1*pose.position.y));
+                return (Math.abs(pose.position.y-y)>=Math.abs(.03*pose.position.y));
             }
         };
     }
@@ -664,7 +664,7 @@ public final class MecanumDrive {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
-                return (Math.abs(pose.heading.toDouble()-yaw)>=Math.abs(.1*pose.heading.toDouble()));
+                return (Math.abs(pose.heading.toDouble()-yaw)>=Math.abs(.03*pose.heading.toDouble()));
             }
         };
     }
@@ -673,7 +673,7 @@ public final class MecanumDrive {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
-                return (Math.abs(pose.position.y-y)>=Math.abs(.1*pose.position.y)&&Math.abs(pose.position.x-x)>=Math.abs(.1*pose.position.x));
+                return (Math.abs(pose.position.y-y)>=Math.abs(.03*pose.position.y)&&Math.abs(pose.position.x-x)>=Math.abs(.03*pose.position.x));
             }
         };
     }
@@ -682,7 +682,7 @@ public final class MecanumDrive {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
-                return (Math.abs(pose.position.y-y)>=Math.abs(.1*pose.position.y)&&Math.abs(pose.position.x-x)>=Math.abs(.1*pose.position.x)&&Math.abs(pose.heading.toDouble()-yaw)>=Math.abs(.1*pose.heading.toDouble()));
+                return (Math.abs(pose.position.y-y)>=Math.abs(.03*pose.position.y)&&Math.abs(pose.position.x-x)>=Math.abs(.03*pose.position.x)&&Math.abs(pose.heading.toDouble()-yaw)>=Math.abs(.03*pose.heading.toDouble()));
             }
         };
     }

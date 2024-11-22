@@ -29,7 +29,7 @@ public final class TrunkTest extends LinearOpMode {
             }
         }
         while(opModeIsActive()){
-            intk.setTrunkPos(360);
+            intk.setTrunkPos(90);
         }
     }
 

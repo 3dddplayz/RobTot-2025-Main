@@ -15,12 +15,17 @@ import com.qualcomm.robotcore.hardware.Servo;
 public class Intake {
     public static class Params {
         double intakeSpeed = 1;
-        public double trunkMaxDegree = 720;//200
-        public double trunkServoMaxTurn = 360*5;
-        public double trunkPowerCoeff = .0025;
+        public double trunkMaxDegree = 190;//200
+        public double trunkServoMaxTurn = 360*5-180;
+        public double trunkPowerCoeff = 2;
+
+        public double twistMaxDegree = 180;//200
+        public double twistServoMaxTurn = 360*5-180;
+        public double twistPowerCoeff = 2;
 
     }
     double trunkPos = 0;
+    double twistPos = 0;
     Params PARAMS = new Params();
     CRServo intakeR, intakeL;
     public Servo trunkR, trunkL, twist;
@@ -86,13 +91,13 @@ public class Intake {
 
         pos/=PARAMS.trunkServoMaxTurn; //converts from degrees(0-360) to servo position(0-1)
 
-        trunkR.setPosition(pos);
-        trunkL.setPosition(pos);
+        trunkR.setPosition(pos+(180/PARAMS.trunkServoMaxTurn));
+        trunkL.setPosition(pos+(180/PARAMS.trunkServoMaxTurn));
     }
 
     public void setTrunkPower(double pow){
-        trunkPos = (trunkR.getPosition() + trunkL.getPosition())/2;
-        setTrunkPos(trunkPos * PARAMS.trunkPowerCoeff * PARAMS.trunkServoMaxTurn);
+        trunkPos = PARAMS.trunkServoMaxTurn*((trunkR.getPosition() + trunkL.getPosition())/2)-180;
+        setTrunkPos(trunkPos + pow*PARAMS.trunkPowerCoeff);
     }
 
     public Action SetTrunkPos(double degree){
@@ -100,6 +105,29 @@ public class Intake {
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
                 setTrunkPos(degree);
+                return false;
+            }
+        };
+    }
+
+    public void setTwistPos(double degree){
+        double pos = Math.max(Math.min(degree,PARAMS.twistMaxDegree),0); //sets a limit to what you can set the servo position to go to
+
+        pos/=PARAMS.twistServoMaxTurn; //converts from degrees(0-360) to servo position(0-1)
+
+        twist.setPosition(pos);
+    }
+
+    public void setTwistPower(double pow){
+        twistPos = twist.getPosition()*PARAMS.twistServoMaxTurn;
+        setTwistPos(twistPos + pow*PARAMS.twistPowerCoeff);
+    }
+
+    public Action SetTwistPos(double degree){
+        return new Action(){
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                setTwistPos(degree);
                 return false;
             }
         };
