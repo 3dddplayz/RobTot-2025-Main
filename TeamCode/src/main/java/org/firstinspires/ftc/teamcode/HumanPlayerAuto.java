@@ -26,67 +26,110 @@ public final class HumanPlayerAuto extends LinearOpMode {
         drive.setTeamBlue();
         waitForStart();
         Actions.runBlocking(
+            //main sequential
             new SequentialAction(
-                    intk.SetTrunkPos(90),
-                    intk.SetTwistPos(90),
-                    new ParallelAction(
-                        drive.actionBuilder(beginPose)
+                intk.SetTrunkPos(90),
+                intk.SetTwistPos(90),
+                //Aproach Pole
+                new ParallelAction(
+                    drive.actionBuilder(beginPose)
                             .setTangent(3*Math.PI/4)
-                            .splineToConstantHeading(new Vector2d(6,-24-12),3*Math.PI/4,new TranslationalVelConstraint(25))
-                            .splineToConstantHeading(new Vector2d(3,-24-10),Math.PI)
-                                .build()
-
-                    ,new SequentialAction(
-                        lift.setVertLifterPos(2520,1)
-
+                            .splineToConstantHeading(new Vector2d(3,-24-10),3*Math.PI/4,new TranslationalVelConstraint(25))
+                    .build(),
+                    new SequentialAction(
+                            lift.setVertLifterPos(2520,1)
                     )
-
                 ),
-                    lift.setVertLifterPos(1600,.7),
-                    new ParallelAction(
-                            drive.actionBuilder(new Pose2d(8,-24-10,Math.PI/2))
-                                    .setTangent(0)
-                                    .splineToSplineHeading(new Pose2d(43,-24*3+17,3*Math.PI/2),0)
-                                    .splineToConstantHeading(new Vector2d(47,-24*3+13),-Math.PI/2)
-
-                                    //regrab 2
-                                    .strafeToConstantHeading(new Vector2d(47,-24*3+15))
-                                    .setTangent(4.5*Math.PI/6)
-                                    .splineToSplineHeading(new Pose2d(8.5,-24-12,-3*Math.PI/2),Math.PI/2)
-                                    .splineToConstantHeading(new Vector2d(5.5,-24-10),Math.PI)
-                                    .build(),
-                            new SequentialAction(
-                                    lift.setVertLifterPos(700,.7),
-                                    intk.IntakeIn(),
-                                    new SleepAction(2),
-                                    drive.waitForX(40),
-                                    lift.setVertLifterPos(2520,.7),
-                                    intk.IntakeOff()
-                            )
-                    ),
-                    lift.setVertLifterPos(1600,.7),
-                    new ParallelAction(
-                            drive.actionBuilder(new Pose2d(8,-24-10,Math.PI/2))
-                                    .setTangent(0)
-                                    .splineToSplineHeading(new Pose2d(43,-24*3+17,3*Math.PI/2),0)
-                                    .splineToConstantHeading(new Vector2d(47,-24*3+13),-Math.PI/2)
-
-                                    //regrab 2
-                                    .strafeToConstantHeading(new Vector2d(47,-24*3+15))
-                                    .setTangent(4.5*Math.PI/6)
-                                    .splineToSplineHeading(new Pose2d(13,-24-12,-3*Math.PI/2),Math.PI/2)
-                                    .splineToConstantHeading(new Vector2d(10,-24-10),Math.PI)
-                                    .build(),
-                            new SequentialAction(
-                                    lift.setVertLifterPos(700,.7),
-                                    intk.IntakeIn(),
-                                    new SleepAction(2),
-                                    drive.waitForX(40),
-                                    lift.setVertLifterPos(2520,.7),
-                                    intk.IntakeOff()
-                            )
-                    ),
-                    lift.setVertLifterPos(0,.7)
+                //1st Place on Pole
+                lift.setVertLifterPos(1600,1),
+                //Drag Samples to Human Player && Approach Human Player
+                new ParallelAction(
+                    drive.actionBuilder(new Pose2d(3, -24-10, Math.PI/2))
+                            .setTangent(-Math.PI/4)
+                            .splineToSplineHeading(new Pose2d(28,-38,3*Math.PI/2),Math.PI/6)
+                            .splineToConstantHeading(new Vector2d(44,-13),0)
+                            .splineToConstantHeading(new Vector2d(58,-17),-Math.PI/2)
+                            .splineToConstantHeading(new Vector2d(58,-24*3+13),-Math.PI/2)
+                            .setTangent(Math.PI/2)
+                            .splineToConstantHeading(new Vector2d(58,-14),Math.PI/2)
+                            .splineToConstantHeading(new Vector2d(47,-14),-Math.PI/2)
+                            .splineToConstantHeading(new Vector2d(47,-24*3+13),-Math.PI/2)
+                    .build(),
+                    new SequentialAction(
+                            lift.setVertLifterPos(700,1),
+                            drive.waitForVector(23.4*2,-23.4*2),
+                            intk.IntakeIn()
+                    )
+                ),
+                //Lift Up 2nd Specimen
+                lift.setVertLifterPos(800,1),
+                //Aproach Pole
+                new ParallelAction(
+                    drive.actionBuilder(new Pose2d(47,-24*3+13,3*Math.PI/2))
+                            .setTangent(4.5*Math.PI/6)
+                            .splineToSplineHeading(new Pose2d(5.5,-24-10,-3*Math.PI/2),2*Math.PI/3)
+                    .build(),
+                    new SequentialAction(
+                            intk.IntakeOff(),
+                            lift.setVertLifterPos(2520,1)
+                    )
+                ),
+                //2nd Place on Pole
+                lift.setVertLifterPos(1600,1),
+                //Approach Human Player
+                new ParallelAction(
+                    drive.actionBuilder(new Pose2d(5.5,-24-10,Math.PI/2))
+                            .setTangent(-Math.PI/6)
+                            .splineToSplineHeading(new Pose2d(43,-24*3+17,3*Math.PI/2),-Math.PI/6)
+                            .splineToConstantHeading(new Vector2d(47,-24*3+13),-Math.PI/2)
+                    .build(),
+                    new SequentialAction(
+                            lift.setVertLifterPos(700,1),
+                            intk.IntakeIn()
+                    )
+                ),
+                //Lift Up Specimen
+                lift.setVertLifterPos(800,1),
+                //Aproach Pole
+                new ParallelAction(
+                    drive.actionBuilder(new Pose2d(47,-24*3+13,3*Math.PI/2))
+                            .setTangent(2*Math.PI/3)
+                            .splineToSplineHeading(new Pose2d(7.5,-24-10,-3*Math.PI/2),2*Math.PI/3)
+                    .build(),
+                    new SequentialAction(
+                            intk.IntakeOff(),
+                            lift.setVertLifterPos(2520,1)
+                    )
+                ),
+                //3rd Place on Pole
+                lift.setVertLifterPos(1600,1),
+                //Approach Human Player
+                new ParallelAction(
+                    drive.actionBuilder(new Pose2d(5.5,-24-10,Math.PI/2))
+                        .setTangent(-Math.PI/6)
+                        .splineToSplineHeading(new Pose2d(43,-24*3+17,3*Math.PI/2),-Math.PI/6)
+                        .splineToConstantHeading(new Vector2d(47,-24*3+13),-Math.PI/2)
+                        .build(),
+                new SequentialAction(
+                        lift.setVertLifterPos(700,1),
+                        intk.IntakeIn()
+                )
+            ),
+                //Lift Up Specimen
+                lift.setVertLifterPos(800,1),
+                //Aproach Pole
+                new ParallelAction(
+                    drive.actionBuilder(new Pose2d(47,-24*3+13,3*Math.PI/2))
+                            .setTangent(2*Math.PI/3)
+                            .splineToSplineHeading(new Pose2d(9.5,-24-10,-3*Math.PI/2),2*Math.PI/3)
+                            .build(),
+                    new SequentialAction(
+                            intk.IntakeOff(),
+                            lift.setVertLifterPos(2520,1)
+                    )
+                ),
+                //4rd Place on Pole
+                lift.setVertLifterPos(1600,1)
 
             )
         );
