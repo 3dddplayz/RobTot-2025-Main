@@ -5,6 +5,7 @@ import com.acmerobotics.roadrunner.Action;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.roadrunner.InstantAction;
+import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.SequentialAction;
@@ -26,9 +27,11 @@ public class TeleOpPlus extends LinearOpMode {
     private List<Action> runningActions = new ArrayList<>();
     private List<Action> runningActionsLift = new ArrayList<>();
     boolean driverOveride = false;
+    boolean clickedX = false;
     MecanumDrive drive;
     Lifters lift;
     Intake intk;
+
     @Override
     public void runOpMode(){
         drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
@@ -36,8 +39,10 @@ public class TeleOpPlus extends LinearOpMode {
         intk = new Intake(hardwareMap);
 
         drive.setTeamRed();
+        drive.pauseCamera();
         waitForStart();
         intk.setTrunkPos(190);
+        intk.setTwistPos(90);
 //        drive.readPos();
         while(opModeIsActive()){
             looping();
@@ -62,7 +67,6 @@ public class TeleOpPlus extends LinearOpMode {
         }
         runningActions = newActions;
 
-
 //        if (gamepad1.a) {
 //            driverOveride = true;
 //            runningActions.add( new SequentialAction(
@@ -78,7 +82,7 @@ public class TeleOpPlus extends LinearOpMode {
 //            driverOveride = true;
 //            drive.autoGrabTest();
 //        }else driverOveride = false;
-        telemetry.addData("Driver Overide: ", driverOveride);
+        telemetry.addData("Driver Overide: ", driverOveride);  //print out data
         telemetry.addData("X: ", drive.pose.position.x);
         telemetry.addData("Y: ", drive.pose.position.y);
         telemetry.addData("Heading: ", drive.pose.heading.toDouble());
@@ -89,6 +93,8 @@ public class TeleOpPlus extends LinearOpMode {
         telemetry.addData("Lifter L: ", lift.vertLifterL.getCurrentPosition());
         telemetry.addData("Twist Pos: ", intk.twist.getPosition());
         telemetry.addData("Trunk Pos: ", intk.trunkR.getPosition());
+        telemetry.addData("extendoL Pos: ", lift.horLifterL.getPosition());
+        telemetry.addData("extendoR Pos: ", lift.horLifterR.getPosition());
         telemetry.update();
         if(!driverOveride) {
             if (gamepad1.dpad_up) {
@@ -107,21 +113,21 @@ public class TeleOpPlus extends LinearOpMode {
         }
 
         //gamepad 2
-        if(gamepad2.a){
+        if(gamepad2.a){  //intake in
             intk.intakeIn();
-        } else if(gamepad2.b) {
+        } else if(gamepad2.b) {  //intake out
             intk.intakeOut();
-        }else intk.intakeOff();
+        }else intk.intakeOff();  //turn off when not touching those two buttons
 
         //lifter control code
 
-        if(gamepad2.y) {
-            runningActions.add(lift.setVertLifterPos(450, .5));
+        if(gamepad2.dpad_down) {  //go down to specimen wall
+            runningActions.add(lift.setVertLifterPos(700, .5));
         }
-        else if(gamepad2.x){
-            runningActions.add(lift.setVertLifterPos(2500, .5));
+        else if(gamepad2.dpad_up){ //go up to pole
+            runningActions.add(lift.setVertLifterPos(2520, .5));
         }
-        else{
+        else{  //lift using triggers
             if(Math.abs(-gamepad2.right_trigger+gamepad2.left_trigger)>0.01){
                 lift.vertLifterR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                 lift.vertLifterL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -131,17 +137,32 @@ public class TeleOpPlus extends LinearOpMode {
             }
         }
 
-        intk.setTwistPower(gamepad2.left_stick_x);
-        if(gamepad2.dpad_up){
-            intk.setTrunkPower(1);
-        } else if(gamepad2.dpad_down){
-            intk.setTrunkPower(-1);
+        intk.setTwistPower(gamepad2.left_stick_x); //twist using left joystick
+        if(gamepad2.left_bumper){  //left bumper = extendo forward
+            lift.setHorLifterPower(1);
+        } else if(gamepad2.right_bumper) { //right bumper = extendo backward
+            lift.setHorLifterPower(-1);
         }
-        //else{
-            //intk.setTrunkPower(0);
-        //}
-        lift.setHorLifterPower(-gamepad2.right_stick_y);
+        intk.setTrunkPower(-gamepad2.right_stick_y); //trunk up and down using right joystick
+//        if(gamepad2.x && !clickedX){
+//            clickedX = true;
+//            runningActions.add(
+//                    new SequentialAction(
+//                    lift.setVertLifterPos(200, .5),
+//                             new ParallelAction(
+//                                     intk.IntakeIn(),
+//                                     lift.setVertLifterPos(100, .5)
+//                             )
+//                    )
+//            );
+//        } else if(gamepad1.x) {
+//            clickedX = true;
+//        } else if(!gamepad1.x) {
+//            clickedX = false;
+//        }
+
     }
+
     public void imageRecMove(){
             double x = drive.getObjX();
             double xChange = Math.min(Math.max(.005*(130-x),-.5),.5);

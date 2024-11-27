@@ -23,6 +23,7 @@ public class Lifters {
         public int lifterLimitLow = 0;
         public double lifterCorCoef = .0008;
         public double horPowerCoeff = 2;
+        public double horLifterOffset = .04;
 
         public double horLifterArmMaxDegree = 95;
         public double horServoMaxTurn = 300/2;
@@ -187,7 +188,7 @@ public class Lifters {
 
 
     public void setHorLifterPower(double pow){
-        horLiftPos = PARAMS.horServoMaxTurn*(horLifterL.getPosition());
+        horLiftPos = PARAMS.horServoMaxTurn*(horLifterL.getPosition()-PARAMS.horLifterOffset);
         setHorLifterPos(horLiftPos+pow*PARAMS.horPowerCoeff);
         //convert average lift pos to degrees then multiply by coeff
     }
@@ -198,8 +199,8 @@ public class Lifters {
 
         pos/=PARAMS.horServoMaxTurn; //converts from degrees(0-360) to servo position(0-1)
 
-        horLifterR.setPosition(pos);
-        horLifterL.setPosition(pos);
+        horLifterR.setPosition(pos+PARAMS.horLifterOffset);
+        horLifterL.setPosition(pos+PARAMS.horLifterOffset);
     }
     public Action SetHorLifterPos(double degree) {
         return new Action(){
